@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nodo sensor GTI3A-2025"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textoEstado"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Preparando Bluetooth..."
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/botonBuscarNuestroDispositivoBTLE"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:onClick="botonBuscarNuestroDispositivoBTLEPulsado"
+            android:text="Buscar GTI3A-2025" />
+
+        <Button
+            android:id="@+id/botonDetenerBusquedaDispositivosBTLE"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="botonDetenerBusquedaDispositivosBTLEPulsado"
+            android:text="Detener búsqueda" />
+
+        <TextView
+            android:id="@+id/textoO3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="O₃: -- ppb"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textoTemperatura"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Temperatura: -- °C"
+            android:textSize="24sp" />
+
+        <TextView
+            android:id="@+id/textoContador"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Contador: --"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/textoRssi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="RSSI: -- dBm"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/textoTrama"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Major / Minor: --"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</ScrollView>
