@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nodo sensor GTI3A-2025"
+            android:text="Nodo sensor GTI Joan"
             android:textSize="24sp"
             android:textStyle="bold" />
 
@@ -32,7 +32,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:onClick="botonBuscarNuestroDispositivoBTLEPulsado"
-            android:text="Buscar GTI3A-2025" />
+            android:text="Buscar GTI Joan" />
 
         <Button
             android:id="@+id/botonDetenerBusquedaDispositivosBTLE"
