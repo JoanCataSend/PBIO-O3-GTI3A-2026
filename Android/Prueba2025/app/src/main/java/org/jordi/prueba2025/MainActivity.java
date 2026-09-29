@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int CODIGO_PERMISOS = 1001;
     private static final int CODIGO_ACTIVAR_BT = 1002;
 
-    private static final String NOMBRE_NODO = "GTI3A-2025";
+    private static final String NOMBRE_NODO = "GTI Joan";
     private static final String UUID_PROYECTO = "EPSG-GTI-PROY-3A";
 
     // Mismos IDs que en Publicador.h
