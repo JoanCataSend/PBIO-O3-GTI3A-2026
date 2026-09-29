@@ -20,7 +20,7 @@ void setup() {
 
   Serial.println();
   Serial.println("======================================");
-  Serial.println(" GTI3A-2025 - NODO O3");
+  Serial.println(" GTI Joan - NODO O3");
   Serial.println("======================================");
 
   Globales::elMedidor.iniciarMedidor();
