@@ -55,9 +55,9 @@ private:
 public:
 
   EmisoraBLE laEmisora {
-    "GTI3A-2025",
-    0x004C,
-    4
+  "GTI Joan",
+  0x004C,
+  4
   };
 
   const int8_t RSSI = -53;
