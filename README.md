@@ -1,111 +1,232 @@
-# PBIO – Nodo O₃ “GTI Joan”
+# PBIO · GTI Joan
 
-Prototipo de adquisición y transmisión BLE para la asignatura **Proyecto de Aplicaciones de Biometría y Medio Ambiente (PBIO)**.
+Sistema completo del proyecto PBIO:
 
-El sistema usa una **SparkFun Pro nRF52840 Mini** y un módulo **SPEC Sensors ULPSM-O3**. El firmware adquiere `Vgas`, `Vref` y `Vtemp`, calcula O₃ y temperatura, filtra la medida de O₃ y publica ambas magnitudes mediante **iBeacon**. La aplicación Android busca únicamente el nodo `GTI Joan`, decodifica la trama y muestra los valores recibidos.
+```text
+Sensor O₃
+↓
+SparkFun nRF52840
+↓ BLE / iBeacon
+Android
+↓ HTTP / JSON
+PHP
+↓
+MariaDB
+↑
+Página web
+```
 
 ## Estructura
 
 ```text
 .
-├── README.md
-├── .gitignore
-├── docs/
-│   ├── architecture.md
-│   ├── hardware.md
-│   ├── sensor-calibration.md
-│   └── validation.md
 ├── firmware/
 │   └── NodoO3/
-│       ├── NodoO3.ino
-│       ├── Medidor.h
-│       ├── Publicador.h
-│       └── EmisoraBLE.h
-└── android/
-    └── proyecto Android Studio completo
+├── android/
+├── server/
+│   ├── Logica.php
+│   ├── SDBaseDatos.php
+│   ├── SDBaseDatos.example.php
+│   └── database/
+├── web/
+│   ├── api.php
+│   ├── index.html
+│   ├── css/
+│   └── js/
+├── docs/
+└── README.md
 ```
 
-La estructura es deliberadamente simple:
+## 1. Base de datos
 
-- `firmware/`: código que corre en la nRF52840.
-- `android/`: aplicación receptora.
-- `docs/`: documentación técnica y pruebas.
-- raíz: solo archivos de entrada al repositorio.
-
-## Identificación BLE
-
-Nombre anunciado:
+La BBDD de producción es:
 
 ```text
-GTI Joan
+jcatsen_pbio
 ```
 
-UUID del proyecto:
+en MariaDB/Plesk.
+
+Las tablas necesarias son:
 
 ```text
-EPSG-GTI-PROY-3A
+Dispositivo
+TipoMedida
+Medida
 ```
 
-Formato:
+Los scripts están en:
 
 ```text
-Major = [ID medida: 8 bits][contador: 8 bits]
-Minor = valor de la medida
+server/database/
 ```
 
-IDs usados:
+Si las tablas y datos iniciales ya aparecen en phpMyAdmin, **no hace falta
+volver a ejecutarlos**.
 
-| Medida | ID |
-|---|---:|
-| CO₂ | 11 |
-| Temperatura | 12 |
-| Ruido | 13 |
-| O₃ | 14 |
+## 2. Configurar la contraseña del servidor
 
-## Firmware
-
-Abrir en Arduino IDE:
+Editar:
 
 ```text
-firmware/NodoO3/NodoO3.ino
+server/SDBaseDatos.php
 ```
 
-Configuración utilizada durante el desarrollo:
+y sustituir solamente:
 
-- Adafruit nRF52 Boards `1.7.0`
-- variante SparkFun nRF52840 Mini
-- Bluefruit52Lib
-- Adafruit TinyUSB `3.6.0`
+```text
+PON_AQUI_LA_CONTRASENA
+```
 
-## Android
+por la contraseña real del usuario:
 
-Abrir en Android Studio la carpeta:
+```text
+jcatsen_pbio_user
+```
+
+`SDBaseDatos.php` está ignorado por Git.
+
+## 3. Subir a Plesk
+
+### Copiar la carpeta
+
+```text
+server/
+```
+
+a:
+
+```text
+/pbio.jcatsen.upv.edu.es/server/
+```
+
+### Copiar el CONTENIDO de
+
+```text
+web/
+```
+
+directamente a:
+
+```text
+/pbio.jcatsen.upv.edu.es/
+```
+
+La carpeta `public/` que creamos para Node.js ya no hace falta. Puedes dejarla vacía o borrarla. No hace falta activar Node.js ni usar npm.
+
+## 4. Probar servidor
+
+Abrir:
+
+```text
+http://pbio.jcatsen.upv.edu.es/api.php?accion=health
+```
+
+Debe aparecer:
+
+```json
+{
+  "ok": true,
+  "database": "jcatsen_pbio"
+}
+```
+
+Después:
+
+```text
+http://pbio.jcatsen.upv.edu.es/api.php?accion=tipos
+```
+
+Debe devolver CO2, Temperatura, Ruido y O3.
+
+## 5. Probar página web
+
+Abrir:
+
+```text
+http://pbio.jcatsen.upv.edu.es/
+```
+
+Al principio puede no haber medidas.
+
+## 6. Android
+
+Abrir:
 
 ```text
 android/
 ```
 
-Para la configuración Gradle incluida se recomienda **JDK 17**.
+en Android Studio.
 
-Las pruebas BLE deben hacerse con un **teléfono Android físico**.
+La aplicación:
+
+1. busca `GTI Joan`;
+2. valida `EPSG-GTI-PROY-3A`;
+3. muestra O₃ y temperatura;
+4. envía cada medida nueva a:
+
+```text
+http://pbio.jcatsen.upv.edu.es/api.php
+```
+
+## 7. Tests Android
+
+Dentro de `android/`:
+
+```text
+gradlew.bat test
+```
+
+En Linux/macOS:
+
+```text
+./gradlew test
+```
+
+## 8. Firmware
+
+Abrir:
+
+```text
+firmware/NodoO3/NodoO3.ino
+```
+
+en Arduino IDE.
+
+Compilar y subir a la SparkFun.
+
+## 9. Prueba completa
+
+Con todo activo:
+
+```text
+SparkFun
+↓ BLE
+Android
+↓ POST
+api.php
+↓
+MariaDB
+↓ GET
+web
+```
+
+En Android debe aparecer:
+
+```text
+Servidor: medida guardada
+```
+
+En phpMyAdmin deben aparecer filas nuevas en `Medida`.
+
+Y la web debe actualizar el histórico automáticamente cada 5 segundos.
 
 ## Documentación
 
-- `docs/architecture.md`: flujo del sistema y protocolo.
-- `docs/hardware.md`: conexiones y adquisición analógica.
-- `docs/sensor-calibration.md`: parámetros específicos del sensor.
-- `docs/validation.md`: plan de comprobación y pruebas.
-
-## Estado
-
-Comprobado:
-
-- adquisición analógica;
-- cálculo de temperatura;
-- cálculo y filtrado de O₃;
-- publicación iBeacon;
-- recepción Android;
-- decodificación de `Major`, `Minor`, ID y contador;
-- visualización de O₃ y temperatura.
-
-La concentración absoluta de O₃ no se considera calibrada metrológicamente: el prototipo usa la sensibilidad individual del sensor, pero el cero actual se aproxima mediante `Vgas0 = Vref`.
+- `docs/architecture.md`
+- `docs/database.md`
+- `docs/api.md`
+- `docs/deployment-plesk.md`
+- `docs/class-audit.md`
+- `docs/validation.md`

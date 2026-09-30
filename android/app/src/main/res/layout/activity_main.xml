@@ -74,6 +74,14 @@
             android:textSize="16sp" />
 
         <TextView
+            android:id="@+id/textoServidor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Servidor: esperando medidas"
+            android:textSize="14sp" />
+
+        <TextView
             android:id="@+id/textoTrama"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

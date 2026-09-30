@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+    <title>PBIO · GTI Joan</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <div>
+        <p class="eyebrow">PBIO</p>
+        <h1>Monitor ambiental · GTI Joan</h1>
+    </div>
+
+    <div
+        id="estadoConexion"
+        class="estado"
+    >
+        Conectando…
+    </div>
+</header>
+
+<main class="layout">
+
+    <aside class="filtros">
+
+        <h2>Filtros</h2>
+
+        <label>
+            Dispositivo
+            <select id="filtroDispositivo">
+                <option value="">Todos</option>
+            </select>
+        </label>
+
+        <label>
+            Tipo de medida
+            <select id="filtroTipo">
+                <option value="">Todos</option>
+            </select>
+        </label>
+
+        <label>
+            Desde
+            <input
+                id="filtroDesde"
+                type="datetime-local"
+            >
+        </label>
+
+        <label>
+            Hasta
+            <input
+                id="filtroHasta"
+                type="datetime-local"
+            >
+        </label>
+
+        <button id="botonActualizar">
+            Actualizar
+        </button>
+
+    </aside>
+
+    <section class="contenido">
+
+        <section>
+            <div class="titulo-seccion">
+                <div>
+                    <p class="eyebrow">Datos</p>
+                    <h2>Últimas medidas</h2>
+                </div>
+
+                <span id="ultimaActualizacion">
+                    —
+                </span>
+            </div>
+
+            <div class="tarjetas">
+
+                <article class="tarjeta">
+                    <span>O₃</span>
+                    <strong id="valorO3">—</strong>
+                    <small>ppb</small>
+                </article>
+
+                <article class="tarjeta">
+                    <span>Temperatura</span>
+                    <strong id="valorTemperatura">—</strong>
+                    <small>°C</small>
+                </article>
+
+                <article class="tarjeta tarjeta-info">
+                    <span>Último RSSI</span>
+                    <strong id="valorRssi">—</strong>
+                    <small>dBm</small>
+                </article>
+
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="titulo-seccion">
+                <div>
+                    <p class="eyebrow">Evolución</p>
+                    <h2>Gráfica temporal</h2>
+                </div>
+            </div>
+
+            <div class="grafica-contenedor">
+                <canvas
+                    id="grafica"
+                    width="1000"
+                    height="340"
+                ></canvas>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="titulo-seccion">
+                <div>
+                    <p class="eyebrow">Historial</p>
+                    <h2>Mediciones recibidas</h2>
+                </div>
+            </div>
+
+            <div
+                id="sinDatos"
+                class="sin-datos"
+                hidden
+            >
+                Todavía no hay medidas para estos filtros.
+            </div>
+
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Fecha / hora</th>
+                        <th>Dispositivo</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>RSSI</th>
+                    </tr>
+                    </thead>
+
+                    <tbody id="tablaMedidas"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </section>
+
+</main>
+
+<script src="js/LogicaFake.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

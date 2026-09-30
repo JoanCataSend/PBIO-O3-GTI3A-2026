@@ -1,61 +1,54 @@
-# Arquitectura
-
-## Flujo
+# Arquitectura final
 
 ```text
 ULPSM-O3
    ↓
-nRF52840
-   ↓
-ADC + cálculo + filtrado
-   ↓
-BLE / iBeacon
-   ↓
+SparkFun nRF52840
+   ↓ BLE / iBeacon
 Android
+   ↓ HTTP / JSON
+api.php
+   ↓
+Logica.php
+   ↓
+MariaDB (jcatsen_pbio)
+   ↑
+api.php
+   ↑
+LogicaFake.js
+   ↑
+Página web
 ```
 
-## Protocolo
+La solución mantiene separadas las responsabilidades importantes sin añadir
+infraestructura innecesaria para la práctica.
 
-UUID:
+## Firmware
 
-```text
-EPSG-GTI-PROY-3A
-```
+- mide O₃ y temperatura;
+- publica iBeacon;
+- `Major = (ID << 8) | contador`;
+- `Minor = valor`.
 
-Nombre BLE:
+## Android
 
-```text
-GTI Joan
-```
+- busca `GTI Joan`;
+- valida `EPSG-GTI-PROY-3A`;
+- interpreta `Major` y `Minor`;
+- muestra las medidas;
+- envía una sola vez cada medida nueva a `api.php`.
 
-Codificación:
+## Backend
 
-```text
-Major = (ID << 8) | contador
-Minor = valor
-```
+`web/api.php` adapta HTTP/JSON.
 
-IDs relevantes:
+`server/Logica.php` contiene la validación y las consultas SQL.
 
-```text
-Temperatura = 12
-O3 = 14
-```
+`server/SDBaseDatos.php` contiene únicamente la configuración de MariaDB
+del servidor Plesk y está ignorado por Git.
 
-Ejemplo:
+## Web
 
-```text
-ID O3 = 14
-contador = 16
-Major = 3600
-Minor = 291
-```
+La UX llama exclusivamente a `LogicaFake.js`.
 
-Android obtiene:
-
-```text
-ID = (Major >> 8) & 0xFF
-contador = Major & 0xFF
-```
-
-y usa `Minor` como valor de medida.
+`LogicaFake.js` realiza las peticiones a `api.php`.

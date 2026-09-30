@@ -1,4 +1,4 @@
-# Android Studio / Gradle
+# Android / Gradle
 .idea/
 **/.idea/
 .gradle/
@@ -13,7 +13,10 @@ local.properties
 .externalNativeBuild/
 captures/
 
-# Arduino build artefacts
+# Configuración privada del servidor
+server/SDBaseDatos.php
+
+# Arduino compilado
 *.hex
 *.bin
 *.elf
@@ -24,7 +27,7 @@ captures/
 *.d
 *.a
 
-# OS / temp
+# Sistema / temporales
 .DS_Store
 ._*
 Thumbs.db

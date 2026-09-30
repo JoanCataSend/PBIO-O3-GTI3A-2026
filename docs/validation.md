@@ -1,77 +1,71 @@
 # Validación
 
-## 1. Alimentación
+## Firmware
 
-Comprobar con multímetro:
+1. Compilar `firmware/NodoO3/NodoO3.ino`.
+2. Subir a la SparkFun.
+3. Verificar por Monitor Serie:
+   - `Vgas`;
+   - `Vref`;
+   - temperatura;
+   - O3 RAW;
+   - O3 CORR;
+   - O3 FILTRADO;
+   - Major/Minor.
 
-```text
-3V3 ↔ GND ≈ 3.3 V
-```
+## API / BBDD
 
-## 2. Vref
-
-Comparar el valor del Monitor Serie con un multímetro.
-
-Debe ser aproximadamente:
-
-```text
-Vref ≈ V+/2
-```
-
-## 3. Vgas
-
-Comparar Monitor Serie y multímetro para descartar errores grandes de adquisición.
-
-## 4. Temperatura
-
-Comparar con un termómetro externo tras dejar estabilizar el conjunto.
-
-## 5. Cálculo de O₃
-
-Comprobar manualmente:
+Abrir:
 
 ```text
-DeltaV = Vgas - Vgas0
-O3_RAW = DeltaV / (-0.03694596)
+http://pbio.jcatsen.upv.edu.es/api.php?accion=health
 ```
 
-y comparar con el Monitor Serie.
+Esperado:
 
-## 6. Filtro
+```json
+{"ok":true,"database":"jcatsen_pbio"}
+```
 
-`O3_FILTRADO` debe variar más suavemente que `O3_CORR`.
-
-## 7. iBeacon
-
-Ejemplo O₃:
+Después abrir:
 
 ```text
-ID = 14
-contador = 16
-Minor = 291
-Major = 3600
+http://pbio.jcatsen.upv.edu.es/api.php?accion=tipos
 ```
 
-Android debe mostrar el mismo `Minor`.
+y comprobar los IDs 11, 12, 13 y 14.
 
-## 8. Fuente de O₃
+## Android
 
-Antes, durante y después de la exposición registrar:
+1. Instalar en teléfono físico.
+2. Pulsar `Buscar GTI Joan`.
+3. Confirmar O₃ y temperatura.
+4. Confirmar `Servidor: medida guardada`.
 
-- `Vgas`
-- `Vref`
-- `O3 RAW`
-- `O3 CORR`
-- `O3 FILTRADO`
+## MariaDB
 
-La prueba permite comprobar respuesta funcional del sensor. La concentración exacta solo puede validarse frente a una referencia conocida.
+Abrir la tabla `Medida` en phpMyAdmin.
 
-## 9. Estabilidad
+Deben aparecer filas nuevas de tipo:
 
-Mantener el sistema funcionando 20–30 minutos y comprobar:
+```text
+12 → Temperatura
+14 → O3
+```
 
-- contador avanzando;
-- alternancia de ID 14 e ID 12;
-- recepción continuada;
-- ausencia de bloqueos;
-- estabilidad razonable de `Vref`.
+## Web
+
+Abrir:
+
+```text
+http://pbio.jcatsen.upv.edu.es/
+```
+
+Comprobar:
+
+- tarjetas de O₃ y temperatura;
+- RSSI;
+- filtros;
+- gráfica;
+- historial;
+- actualización automática.

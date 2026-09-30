@@ -48,6 +48,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView textoContador;
     private TextView textoRssi;
     private TextView textoTrama;
+    private TextView textoServidor;
+
+    private int ultimoContadorO3Enviado = -1;
+    private int ultimoContadorTemperaturaEnviado = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
         textoContador = findViewById(R.id.textoContador);
         textoRssi = findViewById(R.id.textoRssi);
         textoTrama = findViewById(R.id.textoTrama);
+        textoServidor = findViewById(R.id.textoServidor);
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -304,6 +309,19 @@ public class MainActivity extends AppCompatActivity {
                         + " RSSI=" + rssi
         );
 
+        int valorParaServidor =
+                idMedida == ID_O3
+                        ? minorUnsigned
+                        : minorSigned;
+
+        enviarMedidaSiEsNueva(
+                uuid,
+                idMedida,
+                valorParaServidor,
+                contador,
+                rssi
+        );
+
         runOnUiThread(() -> {
 
             textoEstado.setText(
@@ -337,6 +355,100 @@ public class MainActivity extends AppCompatActivity {
                 );
             }
         });
+    }
+
+
+    private void enviarMedidaSiEsNueva(
+            String uuid,
+            int idMedida,
+            int valor,
+            int contador,
+            int rssi
+    ) {
+
+        if (idMedida != ID_O3
+                && idMedida != ID_TEMPERATURA) {
+            return;
+        }
+
+        if (idMedida == ID_O3) {
+
+            if (contador == ultimoContadorO3Enviado) {
+                return;
+            }
+
+            ultimoContadorO3Enviado = contador;
+
+        } else {
+
+            if (contador == ultimoContadorTemperaturaEnviado) {
+                return;
+            }
+
+            ultimoContadorTemperaturaEnviado = contador;
+        }
+
+        MedidaEntrada datos =
+                new MedidaEntrada(
+                        uuid,
+                        idMedida,
+                        valor,
+                        contador,
+                        rssi
+                );
+
+        runOnUiThread(() ->
+                textoServidor.setText(
+                        "Servidor: enviando tipo "
+                                + idMedida
+                                + "..."
+                )
+        );
+
+        LogicaFake.insertarMedida(
+                datos,
+                new PeticionarioREST.Callback() {
+
+                    @Override
+                    public void correcto(
+                            org.json.JSONObject respuesta
+                    ) {
+
+                        runOnUiThread(() ->
+                                textoServidor.setText(
+                                        "Servidor: medida guardada"
+                                )
+                        );
+                    }
+
+                    @Override
+                    public void error(String mensaje) {
+
+                        // Permitimos reintentar esta medida si vuelve
+                        // a recibirse durante la ventana de advertising.
+                        if (idMedida == ID_O3
+                                && ultimoContadorO3Enviado == contador) {
+                            ultimoContadorO3Enviado = -1;
+                        }
+
+                        if (idMedida == ID_TEMPERATURA
+                                && ultimoContadorTemperaturaEnviado == contador) {
+                            ultimoContadorTemperaturaEnviado = -1;
+                        }
+
+                        Log.e(
+                                TAG,
+                                "Error REST: " + mensaje
+                        );
+
+                        runOnUiThread(() ->
+                                textoServidor.setText(
+                                        "Servidor: error de envío"
+                                )
+                        );
+                    }
+                }
+        );
     }
 
     @Override
