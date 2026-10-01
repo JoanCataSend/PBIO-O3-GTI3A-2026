@@ -1,6 +1,12 @@
-// ============================================================
-// NodoO3.ino
-// ============================================================
+/*
+ * Archivo: NodoO3.ino
+ * Descripción: programa principal del nodo BLE del Sprint 0. Coordina la
+ *              obtención de medidas ficticias y su publicación como iBeacon.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: adaptación del código base del profesor al nodo O3 del proyecto.
+ */
 
 #include <bluefruit.h>
 
@@ -13,6 +19,12 @@ namespace Globales {
   Medidor elMedidor;
 }
 
+/*
+ * Diseño lógico: setup() --> sistemaInicializado:VoF
+ * Descripción: inicializa el puerto serie, el medidor ficticio y la emisora BLE.
+ * Nota: Arduino no devuelve explícitamente el booleano; el diseño representa
+ *       el estado lógico alcanzado al finalizar correctamente.
+ */
 void setup() {
 
   Serial.begin(115200);
@@ -20,18 +32,23 @@ void setup() {
 
   Serial.println();
   Serial.println("======================================");
-  Serial.println(" GTI Joan - NODO O3");
+  Serial.println(" GTI Joan - NODO O3 - SPRINT 0");
   Serial.println("======================================");
 
   Globales::elMedidor.iniciarMedidor();
   Globales::elPublicador.encenderEmisora();
 
   Serial.println();
-  Serial.println("Sensor y Bluetooth preparados.");
-  Serial.println("Vgas0 = Vref (Voffset = 0 mV)");
+  Serial.println("Medidor ficticio y Bluetooth preparados.");
   Serial.println("---- setup(): fin ----");
 }
 
+/*
+ * Diseño lógico: loop() -->
+ * Descripción: genera un contador, obtiene O3 y temperatura ficticios y los
+ *              publica secuencialmente mediante iBeacon.
+ * Precondición: setup() ha finalizado correctamente.
+ */
 void loop() {
 
   using namespace Globales;
@@ -39,11 +56,11 @@ void loop() {
   static uint8_t contador = 0;
   contador++;
 
-  // 1) Medir con advertising detenido
+  // 1) Obtener medida ficticia de O3.
   int16_t valorO3ppb =
     elMedidor.medirO3();
 
-  // 2) Publicar O3
+  // 2) Publicar O3.
   elPublicador.publicarO3(
     valorO3ppb,
     contador,
@@ -52,17 +69,17 @@ void loop() {
 
   delay(300);
 
-  // 3) Medir temperatura
+  // 3) Obtener medida ficticia de temperatura.
   int16_t temperaturaC =
     elMedidor.medirTemperatura();
 
-  // 4) Publicar temperatura
+  // 4) Publicar temperatura.
   elPublicador.publicarTemperatura(
     temperaturaC,
     contador,
     1200UL
   );
 
-  // 5) Espera
+  // 5) Espera antes del siguiente ciclo.
   delay(1500);
 }

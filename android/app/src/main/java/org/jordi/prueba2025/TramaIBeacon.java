@@ -1,3 +1,12 @@
+/*
+ * Archivo: TramaIBeacon.java
+ * Descripción: analiza bytes de advertising BLE y extrae UUID, Major, Minor y TxPower.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: decodificación de trama iBeacon para el protocolo PBIO.
+ */
+
 package org.jordi.prueba2025;
 
 import java.util.Arrays;
@@ -14,6 +23,10 @@ public class TramaIBeacon {
 
     private boolean valida = false;
 
+    /**
+     * Diseño lógico: bytes:[N] --> TramaIBeacon() -->
+     * Descripción: construye la trama y analiza inmediatamente su contenido.
+     */
     public TramaIBeacon(byte[] bytes) {
 
         this.losBytes =
@@ -24,6 +37,10 @@ public class TramaIBeacon {
         analizar();
     }
 
+    /**
+     * Diseño lógico: analizar() -->
+     * Descripción: localiza el prefijo Apple+iBeacon y extrae los campos de la trama.
+     */
     private void analizar() {
 
         // Buscar:
@@ -67,26 +84,32 @@ public class TramaIBeacon {
         }
     }
 
+    /** Diseño lógico: esValida() --> valida:VoF. Consulta si se encontró una trama iBeacon. */
     public boolean esValida() {
         return valida;
     }
 
+    /** Diseño lógico: getUUID() --> uuid:[N]_16. Devuelve el UUID extraído. */
     public byte[] getUUID() {
         return uuid;
     }
 
+    /** Diseño lógico: getMajor() --> major:[N]_2. Devuelve los dos bytes de Major. */
     public byte[] getMajor() {
         return major;
     }
 
+    /** Diseño lógico: getMinor() --> minor:[N]_2. Devuelve los dos bytes de Minor. */
     public byte[] getMinor() {
         return minor;
     }
 
+    /** Diseño lógico: getTxPower() --> txPower:Z. Devuelve TxPower de la trama. */
     public byte getTxPower() {
         return txPower;
     }
 
+    /** Diseño lógico: getLosBytes() --> bytes:[N]. Devuelve los bytes originales. */
     public byte[] getLosBytes() {
         return losBytes;
     }

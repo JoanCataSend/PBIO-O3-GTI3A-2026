@@ -1,3 +1,11 @@
+<!--
+ Archivo: themes.xml
+ Descripción: tema nocturno Android.
+ Copyright: 2026 Joan (uso académico PBIO - UPV)
+ Fecha: 2026-10-01
+ Autor: Joan
+ Aportación: configuración del tema nocturno Android.
+-->
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.Prueba2025" parent="Theme.AppCompat.Light.DarkActionBar">

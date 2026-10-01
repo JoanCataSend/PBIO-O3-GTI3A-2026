@@ -1,3 +1,10 @@
+// Archivo: build.gradle
+// Descripción: configuración del módulo Android.
+// Copyright: 2026 Joan (uso académico PBIO - UPV)
+// Fecha: 2026-10-01
+// Autor: Joan
+// Aportación: configuración reproducible de compilación Android.
+
 plugins {
     id 'com.android.application'
 }

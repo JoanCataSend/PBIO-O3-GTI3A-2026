@@ -1,3 +1,12 @@
+/*
+ * Archivo: styles.css
+ * Descripción: estilos responsive de la interfaz PBIO, optimizados para móvil pequeño.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: adaptación responsive y accesible de la interfaz, incluida pantalla pequeña.
+ */
+
 :root {
     --fondo: #f4f6f8;
     --panel: #ffffff;

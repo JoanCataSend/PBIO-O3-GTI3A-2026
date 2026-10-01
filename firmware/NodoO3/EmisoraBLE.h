@@ -1,3 +1,12 @@
+/*
+ * Archivo: EmisoraBLE.h
+ * Descripción: encapsula la configuración y publicación BLE/iBeacon del nodo.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: adaptación de la emisora BLE del código base al nodo GTI Joan.
+ */
+
 #ifndef EMISORABLE_H_INCLUIDO
 #define EMISORABLE_H_INCLUIDO
 
@@ -13,6 +22,11 @@ private:
 
 public:
 
+  /*
+   * Diseño lógico:
+   * nombreEmisora:Texto, fabricante:N, txPower:Z --> EmisoraBLE() -->
+   * Descripción: construye una emisora con nombre, fabricante y potencia.
+   */
   EmisoraBLE(const char* nombreEmisora,
              uint16_t fabricante,
              int8_t txPower)
@@ -20,6 +34,10 @@ public:
       fabricanteID(fabricante),
       potenciaRadio(txPower) {}
 
+  /*
+   * Diseño lógico: encenderEmisora() -->
+   * Descripción: inicializa Bluefruit y deja el advertising detenido.
+   */
   void encenderEmisora() {
 
     Bluefruit.begin();
@@ -29,6 +47,11 @@ public:
     detenerAnuncio();
   }
 
+  /*
+   * Diseño lógico:
+   * uuid:[N]_16, major:N, minor:N, rssi1m:Z --> emitirAnuncioIBeacon() -->
+   * Descripción: configura y comienza un anuncio iBeacon no conectable.
+   */
   void emitirAnuncioIBeacon(const uint8_t uuid[16],
                             uint16_t major,
                             uint16_t minor,
@@ -58,15 +81,15 @@ public:
       beacon
     );
 
-    // Nombre en scan response
+    // El nombre se publica en la scan response.
     Bluefruit.ScanResponse.addName();
 
-    // No conectable, escaneable
+    // Anuncio no conectable y escaneable.
     Bluefruit.Advertising.setType(
       BLE_GAP_ADV_TYPE_NONCONNECTABLE_SCANNABLE_UNDIRECTED
     );
 
-    // 160 * 0.625 ms = 100 ms
+    // 160 * 0.625 ms = 100 ms.
     Bluefruit.Advertising.setInterval(
       160,
       160
@@ -81,6 +104,10 @@ public:
     );
   }
 
+  /*
+   * Diseño lógico: detenerAnuncio() -->
+   * Descripción: detiene el advertising si se encuentra activo.
+   */
   void detenerAnuncio() {
 
     if (Bluefruit.Advertising.isRunning()) {

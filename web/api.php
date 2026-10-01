@@ -1,14 +1,37 @@
 <?php
 
+/*
+ * Archivo: api.php
+ * Descripción: adaptador HTTP/JSON de la API REST del Sprint 0.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: traducción entre peticiones HTTP y funciones de Logica.php.
+ */
+
 declare(strict_types=1);
 
 header(
     'Content-Type: application/json; charset=utf-8'
 );
 
-require_once __DIR__
-    . '/server/Logica.php';
+/*
+ * En Plesk, server/ se copia dentro de /biometria.
+ * En el repositorio, server/ es hermano de web/.
+ * Este fallback permite usar el mismo api.php en ambos contextos.
+ */
+$rutaLogica = __DIR__ . '/server/Logica.php';
 
+if (!is_file($rutaLogica)) {
+    $rutaLogica = dirname(__DIR__) . '/server/Logica.php';
+}
+
+require_once $rutaLogica;
+
+/*
+ * Diseño lógico: codigo:N, datos:JSON --> responder() -->
+ * Descripción: fija el código HTTP, serializa la respuesta y finaliza la petición.
+ */
 function responder(
     int $codigo,
     mixed $datos

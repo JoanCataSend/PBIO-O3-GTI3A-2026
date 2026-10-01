@@ -3,14 +3,12 @@
 declare(strict_types=1);
 
 /*
- * LogicaUnitTest.php
- *
- * Tests automáticos de la lógica de negocio que no necesitan
- * conexión a la base de datos.
- *
- * Ejecutar desde la raíz del repositorio:
- *
- * php server/tests/LogicaUnitTest.php
+ * Archivo: LogicaUnitTest.php
+ * Descripción: tests automáticos unitarios de la lógica de negocio sin conexión BD.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: pruebas unitarias de validación y normalización de la lógica.
  */
 
 require_once __DIR__ . '/../Logica.php';
@@ -18,6 +16,7 @@ require_once __DIR__ . '/../Logica.php';
 $testsEjecutados = 0;
 $testsCorrectos = 0;
 
+/* Diseño lógico: condicion:VoF, nombre:Texto --> comprobar() --> | Error. */
 function comprobar(bool $condicion, string $nombre): void
 {
     global $testsEjecutados, $testsCorrectos;
@@ -33,6 +32,7 @@ function comprobar(bool $condicion, string $nombre): void
     echo "[OK] $nombre" . PHP_EOL;
 }
 
+/* Diseño lógico: funcion:Funcion, claseEsperada:Texto, nombre:Texto --> esperarExcepcion() --> | Error. */
 function esperarExcepcion(
     callable $funcion,
     string $claseEsperada,

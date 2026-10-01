@@ -1,38 +1,55 @@
-# Auditoría de clases respecto a la ingeniería inversa
+# Correspondencia entre ingeniería inversa, diseño e implementación
 
-## Conservadas / usadas
+## Firmware
 
-### Firmware
+| Responsabilidad lógica | Implementación |
+|---|---|
+| Proporcionar medidas | `Medidor` |
+| Codificar ID/contador/valor y publicar | `Publicador` |
+| Gestionar Bluefruit/iBeacon | `EmisoraBLE` |
+| Coordinar el ciclo | `NodoO3.ino` |
 
-- `Medidor`
-- `Publicador`
-- `EmisoraBLE`
+En Sprint 0 `Medidor` es deliberadamente **fake**: devuelve `123 ppb` y `-12 °C`.
 
-### Android
+## Android
 
-- `MainActivity`
-- `TramaIBeacon`
-- `Utilidades`
+| Responsabilidad lógica | Implementación |
+|---|---|
+| Coordinar escaneo/UI | `MainActivity` |
+| Parsear iBeacon | `TramaIBeacon` |
+| Conversiones de bytes | `Utilidades` |
+| Representar entrada al negocio | `MedidaEntrada` |
+| Exponer operación de negocio al cliente | `LogicaFake` |
+| Transporte HTTP | `PeticionarioREST` |
 
-## Añadidas para completar el flujo real
+## Backend
 
-### Android
+| Responsabilidad lógica | Implementación |
+|---|---|
+| Adaptar HTTP/JSON | `web/api.php` |
+| Validar y ejecutar negocio | `server/Logica.php` |
+| Persistencia | MariaDB |
 
-- `MedidaEntrada`
-- `LogicaFake`
-- `PeticionarioREST`
+## Navegador
 
-## Clases del código original que no se reintroducen
+| Responsabilidad lógica | Implementación |
+|---|---|
+| Invocar operaciones lógicas | `web/js/LogicaFake.js` |
+| Controlar UI | `web/js/app.js` |
 
-La ingeniería inversa anterior describía también clases auxiliares como
-`LED`, `PuertoSerie`, `ServicioEnEmisora` y `Caracteristica`.
+## Elementos del código original no reintroducidos
 
-No se añaden como código muerto porque el prototipo actual:
+El código proporcionado históricamente incluía auxiliares como `LED`, `PuertoSerie`, `ServicioEnEmisora` y `Caracteristica`.
 
-- no necesita encapsular el LED para cumplir el flujo de la práctica;
-- usa `Serial` directamente de forma suficiente;
+No se añaden como código muerto porque la arquitectura ejecutada en Sprint 0:
+
+- utiliza `Serial` directamente;
 - publica iBeacon mediante advertising no conectable;
-- no expone un servicio GATT ni características BLE conectables.
+- no necesita un servicio GATT ni características conectables;
+- no necesita encapsular un LED para demostrar el criterio de aceptación.
 
-La responsabilidad actual queda cubierta por las clases que realmente
-participan en la ejecución.
+La ausencia de esas clases está justificada por la implementación realmente utilizada.
+
+## Coherencia
+
+Los diseños formales de `docs/disenos/` se han extraído de la implementación actual y omiten detalles de lenguaje, punteros, callbacks y API específicas cuando no forman parte del diseño lógico.

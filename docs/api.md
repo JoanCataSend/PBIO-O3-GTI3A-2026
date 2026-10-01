@@ -1,21 +1,32 @@
-# API sencilla
+# API REST del Sprint 0
 
-Endpoint:
+URL desplegada:
 
 ```text
-http://pbio.jcatsen.upv.edu.es/api.php
+https://jcatsen.upv.edu.es/biometria/api.php
 ```
 
-## Comprobar conexión
+La API es un adaptador HTTP/JSON. La lógica de negocio se encuentra en `server/Logica.php`.
+
+## GET health
 
 ```text
-GET api.php?accion=health
+GET /biometria/api.php?accion=health
 ```
 
-## Listar medidas
+Respuesta `200`:
+
+```json
+{
+  "ok": true,
+  "database": "jcatsen_pbio"
+}
+```
+
+## GET medidas
 
 ```text
-GET api.php
+GET /biometria/api.php
 ```
 
 Filtros opcionales:
@@ -27,35 +38,84 @@ desde
 hasta
 ```
 
-## Listar dispositivos
+Respuesta `200`: lista de `MedidaVista` ordenada de más reciente a más antigua.
+
+## GET última medida
 
 ```text
-GET api.php?accion=dispositivos
+GET /biometria/api.php?accion=ultima&dispositivoId=1&tipoMedidaId=14
 ```
 
-## Listar tipos
+Respuesta `200`: una `MedidaVista`.
+
+## GET dispositivos
 
 ```text
-GET api.php?accion=tipos
+GET /biometria/api.php?accion=dispositivos
 ```
 
-## Insertar medida
+## GET tipos de medida
 
 ```text
-POST api.php
+GET /biometria/api.php?accion=tipos
+```
+
+## POST insertar medida
+
+```text
+POST /biometria/api.php
 Content-Type: application/json
 ```
 
-Ejemplo:
+Cuerpo `MedidaEntrada`:
 
 ```json
 {
   "uuid": "EPSG-GTI-PROY-3A",
   "tipoMedidaId": 14,
-  "valor": 291,
+  "valor": 123,
   "contador": 16,
   "rssi": -58
 }
 ```
 
 El servidor genera `medidaId` y `fechaHora`.
+
+Respuesta `201`: `MedidaVista` creada.
+
+## Errores HTTP
+
+| Código | Significado |
+|---:|---|
+| 400 | Entrada no válida / JSON incorrecto |
+| 404 | Dispositivo, tipo o medida no existente |
+| 405 | Método HTTP no permitido |
+| 500 | Error interno no previsto |
+
+## Tipos lógicos
+
+```text
+MedidaEntrada = (
+    uuid:Texto,
+    tipoMedidaId:N,
+    valor:Z,
+    contador:N,
+    rssi:Z
+)
+
+MedidaVista = (
+    medidaId:N,
+    dispositivoId:N,
+    uuid:Texto,
+    dispositivo:Texto,
+    tipoMedidaId:N,
+    tipoMedida:Texto,
+    unidad:Texto,
+    valor:Z,
+    contador:N,
+    rssi:Z,
+    fechaHora:Texto
+)
+```
+
+Diseño formal completo: `docs/disenos/05-api-rest.md`.

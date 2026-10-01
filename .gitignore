@@ -36,3 +36,6 @@ desktop.ini
 *.tmp
 *.swp
 *~
+
+# Copias/paquetes locales que no deben entrar en el repositorio
+android.zip

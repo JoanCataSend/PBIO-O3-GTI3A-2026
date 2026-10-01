@@ -1,3 +1,10 @@
+-- Archivo: seed.sql
+-- Descripción: datos iniciales reproducibles del dispositivo y tipos de medida.
+-- Copyright: 2026 Joan (uso académico PBIO - UPV)
+-- Fecha: 2026-10-01
+-- Autor: Joan
+-- Aportación: datos iniciales reproducibles del Sprint 0.
+
 INSERT INTO Dispositivo (uuid, nombre)
 VALUES ('EPSG-GTI-PROY-3A', 'GTI Joan')
 ON DUPLICATE KEY UPDATE

@@ -1,54 +1,111 @@
-# Arquitectura final
+# Arquitectura del Sprint 0
+
+> Este documento describe **la rama Sprint 0 (`main`/`master`)**. En esta versión las medidas no proceden del sensor físico: `Medidor` devuelve valores ficticios reproducibles.
+
+## Flujo completo
 
 ```text
-ULPSM-O3
-   ↓
-SparkFun nRF52840
-   ↓ BLE / iBeacon
-Android
-   ↓ HTTP / JSON
-api.php
-   ↓
-Logica.php
-   ↓
-MariaDB (jcatsen_pbio)
-   ↑
-api.php
-   ↑
+Medidor (firmware)
+O3 = 123 ppb
+Temperatura = -12 °C
+        ↓
+Publicador + EmisoraBLE
+        ↓ iBeacon
+Android / MainActivity
+        ↓
+LogicaFake.java
+        ↓ HTTPS + JSON
+web/api.php
+        ↓
+server/Logica.php
+        ↓
+MariaDB: jcatsen_pbio
+        ↑
+web/api.php
+        ↑
 LogicaFake.js
-   ↑
+        ↑
 Página web
 ```
 
-La solución mantiene separadas las responsabilidades importantes sin añadir
-infraestructura innecesaria para la práctica.
+## Responsabilidades
 
-## Firmware
+### Firmware
 
-- mide O₃ y temperatura;
-- publica iBeacon;
-- `Major = (ID << 8) | contador`;
-- `Minor = valor`.
+- `Medidor.h`: proporciona valores ficticios constantes para la prueba reproducible.
+- `Publicador.h`: asigna ID de medida y codifica `Major` y `Minor`.
+- `EmisoraBLE.h`: configura Bluefruit y publica el iBeacon.
+- `NodoO3.ino`: coordina el ciclo de publicación.
 
-## Android
+### Android
 
-- busca `GTI Joan`;
-- valida `EPSG-GTI-PROY-3A`;
-- interpreta `Major` y `Minor`;
-- muestra las medidas;
-- envía una sola vez cada medida nueva a `api.php`.
+- `MainActivity`: escanea BLE, valida nombre/UUID, decodifica el protocolo y actualiza la UI.
+- `TramaIBeacon`: extrae UUID, Major, Minor y TxPower.
+- `Utilidades`: conversiones de bytes.
+- `MedidaEntrada`: datos enviados al servidor.
+- `LogicaFake`: expone la operación lógica `insertarMedida` al cliente.
+- `PeticionarioREST`: implementa el transporte HTTPS/JSON.
 
-## Backend
+### Backend
 
-`web/api.php` adapta HTTP/JSON.
+- `web/api.php`: conoce HTTP y convierte cada petición en una llamada a la lógica de negocio.
+- `server/Logica.php`: valida datos, realiza operaciones de negocio y accede a MariaDB.
+- `server/SDBaseDatos.php`: configuración privada local del servidor; no se versiona.
 
-`server/Logica.php` contiene la validación y las consultas SQL.
+### Base de datos
 
-`server/SDBaseDatos.php` contiene únicamente la configuración de MariaDB
-del servidor Plesk y está ignorado por Git.
+- `Dispositivo`: identifica cada nodo.
+- `TipoMedida`: catálogo de magnitudes.
+- `Medida`: histórico de valores recibidos.
 
-## Web
+### Web
 
-La UX llama exclusivamente a `LogicaFake.js`.
+- `web/js/LogicaFake.js`: adapta las operaciones lógicas a peticiones `fetch`.
+- `web/js/app.js`: controla filtros, tarjetas, tabla, gráfica y refresco automático.
+- `web/index.html` + `web/css/styles.css`: interfaz responsive.
 
-`LogicaFake.js` realiza las peticiones a `api.php`.
+## Separación de responsabilidades
+
+```text
+UI Android ──> LogicaFake.java ──> PeticionarioREST
+                                   │
+                                   ▼
+                              API REST
+                                   │
+                                   ▼
+                            Logica.php
+                                   │
+                                   ▼
+                                MariaDB
+
+UI Web ──────> LogicaFake.js ─────┘
+```
+
+La UI no contiene SQL. La lógica de negocio no conoce vistas ni componentes Android. `Logica.php` no depende del navegador ni de la actividad Android.
+
+## Protocolo de medida
+
+```text
+Major = [ID de medida: 8 bits][contador: 8 bits]
+Minor = valor de la medida en 16 bits
+```
+
+IDs:
+
+| Medida | ID |
+|---|---:|
+| CO2 | 11 |
+| Temperatura | 12 |
+| Ruido | 13 |
+| O3 | 14 |
+
+En Sprint 0 se publican:
+
+```text
+O3 = 123 ppb
+Temperatura = -12 °C
+```
+
+## Versión con sensor real
+
+La adquisición física del ULPSM-O3 no pertenece al Sprint 0 reproducible. Se conserva en la rama `sensor-real-final`. La documentación específica de esa evolución está en `docs/sensor-real-final/`.

@@ -1,24 +1,58 @@
-# Validación
+# Validación y criterio de aceptación del Sprint 0
 
-## Firmware
+## Criterio principal
 
-1. Compilar `firmware/NodoO3/NodoO3.ino`.
-2. Subir a la SparkFun.
-3. Verificar por Monitor Serie:
-   - `Vgas`;
-   - `Vref`;
-   - temperatura;
-   - O3 RAW;
-   - O3 CORR;
-   - O3 FILTRADO;
-   - Major/Minor.
+El test se supera cuando **la misma medida ficticia definida en el firmware** atraviesa toda la arquitectura y aparece en la web.
 
-## API / BBDD
-
-Abrir:
+Valores de referencia:
 
 ```text
-http://pbio.jcatsen.upv.edu.es/api.php?accion=health
+O3 = 123 ppb
+Temperatura = -12 °C
+```
+
+## 1. Firmware
+
+1. Compilar `firmware/NodoO3/NodoO3.ino`.
+2. Cargarlo en la SparkFun Pro nRF52840 Mini.
+3. Abrir el Monitor Serie a `115200`.
+4. Comprobar mensajes equivalentes a:
+
+```text
+--- MEDIDA FICTICIA O3 ---
+O3 = 123 ppb
+
+--- PUBLICACION iBeacon ---
+ID medida = 14
+minor = 123
+
+--- MEDIDA FICTICIA TEMPERATURA ---
+Temperatura = -12 C
+
+--- PUBLICACION iBeacon ---
+ID medida = 12
+minor = -12
+```
+
+## 2. Android
+
+1. Instalar la aplicación en un teléfono Android físico.
+2. Conceder permisos BLE.
+3. Pulsar `Buscar GTI Joan`.
+4. Comprobar:
+
+```text
+O3: 123 ppb
+Temperatura: -12 °C
+Servidor: medida guardada
+```
+
+## 3. API / base de datos
+
+Health:
+
+```text
+https://jcatsen.upv.edu.es/biometria/api.php?accion=health
 ```
 
 Esperado:
@@ -27,45 +61,73 @@ Esperado:
 {"ok":true,"database":"jcatsen_pbio"}
 ```
 
-Después abrir:
+Comprobar en phpMyAdmin que `Medida` recibe filas para:
 
 ```text
-http://pbio.jcatsen.upv.edu.es/api.php?accion=tipos
+12 -> Temperatura
+14 -> O3
 ```
 
-y comprobar los IDs 11, 12, 13 y 14.
-
-## Android
-
-1. Instalar en teléfono físico.
-2. Pulsar `Buscar GTI Joan`.
-3. Confirmar O₃ y temperatura.
-4. Confirmar `Servidor: medida guardada`.
-
-## MariaDB
-
-Abrir la tabla `Medida` en phpMyAdmin.
-
-Deben aparecer filas nuevas de tipo:
-
-```text
-12 → Temperatura
-14 → O3
-```
-
-## Web
+## 4. Web
 
 Abrir:
 
 ```text
-http://pbio.jcatsen.upv.edu.es/
+https://jcatsen.upv.edu.es/biometria/
 ```
 
 Comprobar:
 
-- tarjetas de O₃ y temperatura;
-- RSSI;
-- filtros;
+- O3 = `123 ppb`;
+- Temperatura = `-12 °C`;
+- RSSI visible;
+- filtros operativos;
+- histórico;
 - gráfica;
-- historial;
-- actualización automática.
+- estado `Servidor conectado`.
+
+## 5. Tests automáticos
+
+### Lógica de negocio
+
+```powershell
+C:\xampp\php\php.exe server\tests\LogicaUnitTest.php
+```
+
+Resultado validado:
+
+```text
+10/10 tests correctos
+```
+
+### Integración API
+
+```powershell
+C:\xampp\php\php.exe server\tests\ApiIntegracionTest.php
+```
+
+Resultado validado:
+
+```text
+6/6 tests correctos
+```
+
+### Android unit tests
+
+Desde `android/`:
+
+```powershell
+.\gradlew.bat test
+```
+
+### Android instrumented test
+
+Con teléfono/emulador disponible:
+
+```powershell
+.\gradlew.bat connectedAndroidTest
+```
+
+## Evidencias
+
+Las capturas disponibles se encuentran en `docs/evidencias/`.

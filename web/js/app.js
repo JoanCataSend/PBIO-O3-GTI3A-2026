@@ -1,3 +1,13 @@
+/*
+ * Archivo: app.js
+ * Descripción: controlador de la interfaz web del Sprint 0. Carga catálogos,
+ *              consulta medidas y actualiza resumen, tabla y gráfica.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: UX del navegador y refresco automático cada 5 segundos.
+ */
+
 "use strict";
 
 const ui = {
@@ -55,6 +65,10 @@ const ui = {
         )
 };
 
+/**
+ * Diseño lógico: iniciar() -->
+ * Descripción: comprueba servidor, carga catálogos, actualiza datos y programa refresco.
+ */
 async function iniciar() {
 
     ui.boton.addEventListener(
@@ -86,6 +100,10 @@ async function iniciar() {
     }
 }
 
+/**
+ * Diseño lógico: cargarCatalogos() -->
+ * Descripción: obtiene dispositivos/tipos y rellena los selectores de filtros.
+ */
 async function cargarCatalogos() {
 
     const [
@@ -133,6 +151,10 @@ async function cargarCatalogos() {
     }
 }
 
+/**
+ * Diseño lógico: filtrosUI --> actualizar() -->
+ * Descripción: consulta medidas filtradas y refresca todos los componentes visuales.
+ */
 async function actualizar() {
 
     try {
@@ -174,6 +196,10 @@ async function actualizar() {
     }
 }
 
+/**
+ * Diseño lógico: valor:Texto --> fechaSql() --> fecha:Texto
+ * Descripción: transforma datetime-local al formato SQL esperado por la API.
+ */
 function fechaSql(valor) {
 
     if (!valor) {
@@ -185,6 +211,10 @@ function fechaSql(valor) {
         + ":00";
 }
 
+/**
+ * Diseño lógico: medidas:[MedidaVista] --> pintarResumen() -->
+ * Descripción: muestra último O3, temperatura y RSSI.
+ */
 function pintarResumen(medidas) {
 
     const ultimaO3 =
@@ -216,6 +246,10 @@ function pintarResumen(medidas) {
             : "—";
 }
 
+/**
+ * Diseño lógico: medidas:[MedidaVista] --> pintarTabla() -->
+ * Descripción: reconstruye el histórico escapando los valores antes de insertarlos.
+ */
 function pintarTabla(medidas) {
 
     ui.tabla.innerHTML = "";
@@ -262,6 +296,10 @@ function pintarTabla(medidas) {
     }
 }
 
+/**
+ * Diseño lógico: medidas:[MedidaVista] --> pintarGrafica() -->
+ * Descripción: representa hasta 50 valores del tipo seleccionado en un canvas.
+ */
 function pintarGrafica(medidas) {
 
     const canvas =
@@ -284,9 +322,15 @@ function pintarGrafica(medidas) {
             )
         );
 
+    const alto =
+        Math.max(
+            220,
+            Math.round(rect.height || 340)
+        );
+
     canvas.height =
         Math.floor(
-            340 * escala
+            alto * escala
         );
 
     ctx.scale(
@@ -296,8 +340,6 @@ function pintarGrafica(medidas) {
 
     const ancho =
         canvas.width / escala;
-
-    const alto = 340;
 
     ctx.clearRect(
         0,
@@ -438,6 +480,10 @@ function pintarGrafica(medidas) {
     );
 }
 
+/**
+ * Diseño lógico: valor:Texto --> escapar() --> textoSeguro:Texto
+ * Descripción: escapa caracteres HTML para evitar interpretar datos como marcado.
+ */
 function escapar(valor) {
 
     return String(
@@ -450,6 +496,10 @@ function escapar(valor) {
         .replaceAll("'", "&#039;");
 }
 
+/**
+ * Diseño lógico: error:Error --> mostrarError() -->
+ * Descripción: registra el error y actualiza el estado visual de conexión.
+ */
 function mostrarError(error) {
 
     console.error(error);

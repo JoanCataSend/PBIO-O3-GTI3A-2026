@@ -1,3 +1,12 @@
+/*
+ * Archivo: PeticionarioREST.java
+ * Descripción: cliente HTTP mínimo para enviar JSON por POST fuera del hilo de UI.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: encapsulación del transporte REST del cliente Android.
+ */
+
 package org.jordi.prueba2025;
 
 import org.json.JSONObject;
@@ -14,14 +23,24 @@ import java.util.concurrent.Executors;
 
 public class PeticionarioREST {
 
+    /**
+     * Resultado lógico asíncrono del transporte REST.
+     */
     public interface Callback {
+        /** Diseño lógico: respuesta:JSON --> correcto() -->. Comunica éxito. */
         void correcto(JSONObject respuesta);
+
+        /** Diseño lógico: mensaje:Texto --> error() -->. Comunica fallo. */
         void error(String mensaje);
     }
 
     private static final ExecutorService EJECUTOR =
             Executors.newSingleThreadExecutor();
 
+    /**
+     * Diseño lógico: url:Texto, datos:JSON, callback:Callback --> postJson() -->
+     * Descripción: realiza un POST JSON y comunica éxito o error mediante callback.
+     */
     public static void postJson(
             String urlTexto,
             JSONObject datos,
@@ -101,6 +120,10 @@ public class PeticionarioREST {
         });
     }
 
+    /**
+     * Diseño lógico: entrada:FlujoTexto --> leerTexto() --> texto:Texto | Error
+     * Descripción: consume un flujo UTF-8 y devuelve su contenido completo.
+     */
     private static String leerTexto(
             InputStream entrada
     ) throws Exception {

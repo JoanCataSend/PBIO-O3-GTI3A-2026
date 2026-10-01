@@ -1,5 +1,7 @@
 # Hardware
 
+> **Nota de alcance:** este documento corresponde a la evolución `sensor-real-final`. No describe el firmware ficticio entregable del Sprint 0 (`main`/`master`).
+
 ## Componentes
 
 - SparkFun Pro nRF52840 Mini

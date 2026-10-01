@@ -1,3 +1,11 @@
+<!--
+ Archivo: index.html
+ Descripción: interfaz web responsive para consulta del Sprint 0 PBIO.
+ Copyright: 2026 Joan (uso académico PBIO - UPV)
+ Fecha: 2026-10-01
+ Autor: Joan
+ Aportación: estructura semántica de la interfaz web.
+-->
 <!doctype html>
 <html lang="es">
 <head>
@@ -21,6 +29,8 @@
     <div
         id="estadoConexion"
         class="estado"
+        role="status"
+        aria-live="polite"
     >
         Conectando…
     </div>
@@ -77,7 +87,7 @@
                     <h2>Últimas medidas</h2>
                 </div>
 
-                <span id="ultimaActualizacion">
+                <span id="ultimaActualizacion" aria-live="polite">
                     —
                 </span>
             </div>

@@ -3,21 +3,12 @@
 declare(strict_types=1);
 
 /*
- * ApiIntegracionTest.php
- *
- * Test automático de integración contra el servidor desplegado.
- * Comprueba la cadena:
- *
- * cliente -> HTTPS -> API REST -> lógica de negocio -> MariaDB
- *
- * No accede directamente a MariaDB desde el ordenador local,
- * por lo que no necesita abrir el puerto de la base de datos.
- *
- * Este test es de solo lectura: no inserta ni borra medidas.
- *
- * Ejecutar desde la raíz del repositorio:
- *
- * C:\xampp\php\php.exe server\tests\ApiIntegracionTest.php
+ * Archivo: ApiIntegracionTest.php
+ * Descripción: test automático de integración HTTPS contra la API desplegada.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: prueba de la cadena HTTPS -> API -> lógica -> MariaDB.
  */
 
 const API_URL =
@@ -26,6 +17,7 @@ const API_URL =
 $testsEjecutados = 0;
 $testsCorrectos = 0;
 
+/* Diseño lógico: condicion:VoF, nombre:Texto --> comprobar() --> | Error. */
 function comprobar(
     bool $condicion,
     string $nombre
@@ -43,6 +35,10 @@ function comprobar(
     echo "[OK] $nombre" . PHP_EOL;
 }
 
+/*
+ * Diseño lógico: url:Texto --> getJson() --> JSON | Error
+ * Descripción: realiza GET HTTPS y decodifica una respuesta JSON.
+ */
 function getJson(string $url): array
 {
     $contexto = stream_context_create([

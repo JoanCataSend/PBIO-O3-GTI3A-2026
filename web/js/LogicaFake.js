@@ -1,9 +1,22 @@
+/*
+ * Archivo: LogicaFake.js
+ * Descripción: adaptador lógico del navegador para consultar la API REST.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: interfaz asíncrona para medidas, dispositivos, tipos y health.
+ */
+
 "use strict";
 
 const LogicaFake = (() => {
 
     const API = "api.php";
 
+    /**
+     * Diseño lógico: url:Texto, opciones:PeticionHTTP --> pedir() --> JSON | Error
+     * Descripción: ejecuta fetch, interpreta JSON y normaliza errores HTTP.
+     */
     async function pedir(url, opciones = {}) {
 
         const respuesta =
@@ -29,7 +42,10 @@ const LogicaFake = (() => {
         return datos;
     }
 
-    // listarMedidas() --> [MedidaVista]
+    /**
+     * Diseño lógico: filtros:FiltrosMedida --> listarMedidas() --> [MedidaVista] | Error
+     * Descripción: convierte filtros no vacíos en query string y consulta medidas.
+     */
     async function listarMedidas(
         filtros = {}
     ) {
@@ -61,20 +77,21 @@ const LogicaFake = (() => {
         );
     }
 
-    // listarDispositivos() --> [Dispositivo]
+    /** Diseño lógico: listarDispositivos() --> [Dispositivo] | Error. */
     async function listarDispositivos() {
         return pedir(
             `${API}?accion=dispositivos`
         );
     }
 
-    // listarTiposMedida() --> [TipoMedida]
+    /** Diseño lógico: listarTiposMedida() --> [TipoMedida] | Error. */
     async function listarTiposMedida() {
         return pedir(
             `${API}?accion=tipos`
         );
     }
 
+    /** Diseño lógico: health() --> EstadoBD | Error. */
     async function health() {
         return pedir(
             `${API}?accion=health`

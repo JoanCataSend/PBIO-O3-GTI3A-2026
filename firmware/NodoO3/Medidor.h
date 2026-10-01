@@ -1,55 +1,32 @@
-// ============================================================
-// Medidor.h
-//
-// Descripción:
-// Clase encargada de proporcionar las medidas utilizadas por
-// el nodo durante el Sprint 0.
-//
-// En esta versión las medidas son ficticias y constantes.
-// No se accede todavía al sensor físico de O3.
-//
-// Esta implementación permite comprobar el funcionamiento
-// completo del sistema:
-//
-// Arduino -> BLE -> Android -> API REST -> BBDD -> Web
-//
-// Autor: Joan
-// Fecha: 2026
-// Aportación:
-// Adaptación del Medidor proporcionado por el profesor para
-// trabajar con la magnitud O3 del proyecto PBIO.
-//
-// ============================================================
+/*
+ * Archivo: Medidor.h
+ * Descripción: clase que proporciona las medidas ficticias del Sprint 0.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: adaptación del Medidor del código proporcionado por el profesor
+ *             para trabajar con O3 y temperatura en el proyecto PBIO.
+ */
 
 #ifndef MEDIDOR_H_INCLUIDO
 #define MEDIDOR_H_INCLUIDO
 
 #include <Arduino.h>
 
-
 class Medidor {
 
 public:
 
   /*
-   * Medidor()
-   *
-   * Constructor de la clase.
-   * En el Sprint 0 no es necesario inicializar hardware,
-   * ya que las medidas utilizadas son ficticias.
+   * Diseño lógico: Medidor() -->
+   * Descripción: construye el medidor ficticio. No inicializa hardware.
    */
   Medidor() {
   }
 
-
   /*
-   * iniciarMedidor()
-   *
-   * Inicializa el medidor.
-   *
-   * En esta versión fake no se configura ningún ADC ni
-   * ningún sensor físico. Únicamente informa por puerto
-   * serie de que se están utilizando valores ficticios.
+   * Diseño lógico: iniciarMedidor() -->
+   * Descripción: informa por puerto serie de los valores ficticios usados.
    */
   void iniciarMedidor() {
 
@@ -60,18 +37,10 @@ public:
     Serial.println("Temperatura fija = -12 C");
   }
 
-
   /*
-   * medirO3()
-   *
-   * Devuelve una medida ficticia de concentración de O3.
-   *
-   * Se utiliza el valor 123 siguiendo el mismo criterio
-   * del código proporcionado por el profesor, donde
-   * medirCO2() devolvía siempre el valor 123.
-   *
-   * Retorno:
-   *   Concentración ficticia de O3 en ppb.
+   * Diseño lógico: medirO3() --> valorO3:Z
+   * Descripción: devuelve la concentración ficticia de O3 del Sprint 0.
+   * Postcondición: valorO3 = 123 ppb.
    */
   int16_t medirO3() {
 
@@ -86,17 +55,10 @@ public:
     return valorO3;
   }
 
-
   /*
-   * medirTemperatura()
-   *
-   * Devuelve una temperatura ficticia.
-   *
-   * Se conserva el valor -12 utilizado en el ejemplo
-   * original proporcionado por el profesor.
-   *
-   * Retorno:
-   *   Temperatura ficticia en grados Celsius.
+   * Diseño lógico: medirTemperatura() --> temperatura:Z
+   * Descripción: devuelve la temperatura ficticia del Sprint 0.
+   * Postcondición: temperatura = -12 grados Celsius.
    */
   int16_t medirTemperatura() {
 
@@ -111,6 +73,5 @@ public:
     return valorTemperatura;
   }
 };
-
 
 #endif

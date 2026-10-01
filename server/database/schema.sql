@@ -1,5 +1,9 @@
--- PBIO - MariaDB
--- Ejecutar dentro de jcatsen_pbio.
+-- Archivo: schema.sql
+-- Descripción: esquema reproducible de la base de datos MariaDB del Sprint 0.
+-- Copyright: 2026 Joan (uso académico PBIO - UPV)
+-- Fecha: 2026-10-01
+-- Autor: Joan
+-- Aportación: tablas Dispositivo, TipoMedida y Medida con integridad referencial.
 
 CREATE TABLE IF NOT EXISTS Dispositivo (
     dispositivoId INT UNSIGNED

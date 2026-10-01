@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-
+<!--
+ Archivo: AndroidManifest.xml
+ Descripción: permisos, feature BLE y actividad principal de la app PBIO.
+ Copyright: 2026 Joan (uso académico PBIO - UPV)
+ Fecha: 2026-10-01
+ Autor: Joan
+ Aportación: declaración de permisos y requisitos BLE/Internet.
+-->
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">

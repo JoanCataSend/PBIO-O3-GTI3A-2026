@@ -1,3 +1,13 @@
+/*
+ * Archivo: LogicaFake.java
+ * Descripción: adaptador lógico del cliente Android para invocar la operación
+ *              insertarMedida mediante REST sin mezclar HTTP con MainActivity.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: lógica fake del cliente Android para el Sprint 0.
+ */
+
 package org.jordi.prueba2025;
 
 import org.json.JSONException;
@@ -9,7 +19,10 @@ public class LogicaFake {
     public static final String URL_API =
             "https://jcatsen.upv.edu.es/biometria/api.php";
 
-    // datos: MedidaEntrada --> insertarMedida() --> Medida
+    /**
+     * Diseño lógico: datos:MedidaEntrada --> insertarMedida() --> MedidaVista | Error
+     * Descripción: serializa la medida y delega el POST en PeticionarioREST.
+     */
     public static void insertarMedida(
             MedidaEntrada datos,
             PeticionarioREST.Callback callback

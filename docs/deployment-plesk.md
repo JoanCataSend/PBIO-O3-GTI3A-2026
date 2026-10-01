@@ -1,76 +1,110 @@
 # Despliegue en Plesk
 
-El subdominio ya creado es:
+URL pública:
 
 ```text
-pbio.jcatsen.upv.edu.es
+https://jcatsen.upv.edu.es/biometria/
 ```
 
-y su raíz es:
+API:
 
 ```text
-/pbio.jcatsen.upv.edu.es
+https://jcatsen.upv.edu.es/biometria/api.php
 ```
 
-## Copiar archivos
+## Estructura en Plesk
 
-### 1. Backend privado
-
-Copia la carpeta del repositorio:
+Dentro de `httpdocs` debe existir:
 
 ```text
-server/
+httpdocs/
+└── biometria/
+    ├── index.html
+    ├── api.php
+    ├── css/
+    │   └── styles.css
+    ├── js/
+    │   ├── LogicaFake.js
+    │   └── app.js
+    └── server/
+        ├── Logica.php
+        └── SDBaseDatos.php
 ```
 
-a:
+## 1. Base de datos
+
+Crear/importar en MariaDB:
 
 ```text
-/pbio.jcatsen.upv.edu.es/server/
+server/database/schema.sql
+server/database/seed.sql
 ```
 
-Antes de subirla, abre:
+Base utilizada:
+
+```text
+jcatsen_pbio
+```
+
+## 2. Configuración privada
+
+Partir de:
+
+```text
+server/SDBaseDatos.example.php
+```
+
+y crear en el servidor:
 
 ```text
 server/SDBaseDatos.php
 ```
 
-y sustituye:
+La contraseña real se introduce **solo en Plesk**. `SDBaseDatos.php` está ignorado por Git y no debe publicarse.
+
+## 3. Backend
+
+Copiar al servidor:
 
 ```text
-PON_AQUI_LA_CONTRASENA
+server/Logica.php
+server/SDBaseDatos.php
 ```
 
-por la contraseña real de `jcatsen_pbio_user`.
-
-### 2. Página web + API
-
-Copia **el contenido** de:
+hacia:
 
 ```text
-web/
+/httpdocs/biometria/server/
 ```
 
-directamente a:
+## 4. Web + API
+
+Copiar el contenido de `web/` a:
 
 ```text
-/pbio.jcatsen.upv.edu.es/
+/httpdocs/biometria/
 ```
 
-Debe quedar:
+`api.php` acepta tanto la estructura de despliegue anterior como la estructura del repositorio mediante resolución de ruta de `Logica.php`.
+
+## 5. Comprobación
+
+Abrir:
 
 ```text
-/pbio.jcatsen.upv.edu.es/
-├── index.html
-├── api.php
-├── css/
-│   └── styles.css
-├── js/
-│   ├── LogicaFake.js
-│   └── app.js
-└── server/
-    ├── SDBaseDatos.php
-    └── Logica.php
+https://jcatsen.upv.edu.es/biometria/api.php?accion=health
 ```
 
-La carpeta `public/` creada anteriormente para Node.js ya no hace falta.
-No hace falta activar Node.js. PHP 8 + MariaDB son suficientes.
+Esperado:
+
+```json
+{"ok":true,"database":"jcatsen_pbio"}
+```
+
+Después abrir:
+
+```text
+https://jcatsen.upv.edu.es/biometria/
+```
+
+No se utiliza Node.js ni un subdominio adicional en esta versión.

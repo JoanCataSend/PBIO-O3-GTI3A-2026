@@ -1,7 +1,21 @@
 <?php
 
+/*
+ * Archivo: Logica.php
+ * Descripción: lógica de negocio del servidor PBIO. Valida MedidaEntrada,
+ *              consulta catálogos y almacena/recupera medidas en MariaDB.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: implementación de la lógica de negocio independiente de HTTP.
+ */
+
 declare(strict_types=1);
 
+/*
+ * Diseño lógico: conexionBD() --> ConexionBD | Error
+ * Descripción: crea o reutiliza la conexión MariaDB configurada localmente.
+ */
 function conexionBD(): mysqli
 {
     static $conexion = null;
@@ -31,6 +45,11 @@ function conexionBD(): mysqli
     return $conexion;
 }
 
+/*
+ * Diseño lógico: probarConexion() --> EstadoBD | Error
+ * EstadoBD = (ok:VoF, database:Texto)
+ * Descripción: ejecuta una consulta mínima para comprobar la disponibilidad BD.
+ */
 function probarConexion(): array
 {
     $bd = conexionBD();
@@ -49,7 +68,11 @@ function probarConexion(): array
     ];
 }
 
-// datos: MedidaEntrada --> insertarMedida() --> MedidaVista
+/*
+ * Diseño lógico: datos:MedidaEntrada --> insertarMedida() --> MedidaVista | Error
+ * Descripción: valida la entrada, resuelve dispositivo/tipo, inserta la medida y
+ *              devuelve la vista completa de la fila creada.
+ */
 function insertarMedida(array $datos): array
 {
     validarMedidaEntrada($datos);
@@ -130,7 +153,10 @@ function insertarMedida(array $datos): array
     );
 }
 
-// medidaId: N --> buscarMedidaConId() --> MedidaVista
+/*
+ * Diseño lógico: medidaId:N --> buscarMedidaConId() --> MedidaVista | Error
+ * Descripción: recupera una medida concreta por su identificador interno.
+ */
 function buscarMedidaConId(int $medidaId): array
 {
     $bd = conexionBD();
@@ -159,7 +185,11 @@ function buscarMedidaConId(int $medidaId): array
     return normalizarMedidaVista($fila);
 }
 
-// filtros --> listarMedidas() --> [MedidaVista]
+/*
+ * Diseño lógico: filtros:FiltrosMedida --> listarMedidas() --> [MedidaVista] | Error
+ * Descripción: lista hasta 500 medidas ordenadas por fecha y aplica los filtros
+ *              opcionales de dispositivo, tipo y rango temporal.
+ */
 function listarMedidas(array $filtros = []): array
 {
     $bd = conexionBD();
@@ -235,7 +265,10 @@ function listarMedidas(array $filtros = []): array
     return $medidas;
 }
 
-// listarDispositivos() --> [Dispositivo]
+/*
+ * Diseño lógico: listarDispositivos() --> [Dispositivo] | Error
+ * Descripción: devuelve los dispositivos conocidos ordenados por nombre.
+ */
 function listarDispositivos(): array
 {
     $bd = conexionBD();
@@ -251,7 +284,10 @@ function listarDispositivos(): array
     );
 }
 
-// listarTiposMedida() --> [TipoMedida]
+/*
+ * Diseño lógico: listarTiposMedida() --> [TipoMedida] | Error
+ * Descripción: devuelve el catálogo de tipos de medida ordenado por ID.
+ */
 function listarTiposMedida(): array
 {
     $bd = conexionBD();
@@ -267,7 +303,11 @@ function listarTiposMedida(): array
     );
 }
 
-// dispositivoId:N, tipoMedidaId:N --> buscarUltimaMedida() --> MedidaVista
+/*
+ * Diseño lógico:
+ * dispositivoId:N, tipoMedidaId:N --> buscarUltimaMedida() --> MedidaVista | Error
+ * Descripción: devuelve la última medida de una combinación dispositivo/tipo.
+ */
 function buscarUltimaMedida(
     int $dispositivoId,
     int $tipoMedidaId
@@ -304,6 +344,14 @@ function buscarUltimaMedida(
     return normalizarMedidaVista($fila);
 }
 
+/*
+ * Diseño lógico: datos:MedidaEntrada --> validarMedidaEntrada() --> | Error
+ * Descripción: verifica campos obligatorios, tipos enteros y rango del contador.
+ * Precondiciones de MedidaEntrada:
+ * - uuid no vacío.
+ * - tipoMedidaId, valor, contador y rssi enteros.
+ * - 0 <= contador <= 255.
+ */
 function validarMedidaEntrada(
     array $datos
 ): void {
@@ -361,6 +409,11 @@ function validarMedidaEntrada(
     }
 }
 
+/*
+ * Diseño lógico: consultaMedidaVista() --> consulta:Texto
+ * Descripción: construye la consulta común que une Medida, Dispositivo y
+ *              TipoMedida para obtener una MedidaVista.
+ */
 function consultaMedidaVista(): string
 {
     return
@@ -386,6 +439,10 @@ function consultaMedidaVista(): string
             ON t.tipoMedidaId = m.tipoMedidaId';
 }
 
+/*
+ * Diseño lógico: fila:MedidaVistaBD --> normalizarMedidaVista() --> MedidaVista
+ * Descripción: convierte a enteros los campos numéricos devueltos por MariaDB.
+ */
 function normalizarMedidaVista(
     array $fila
 ): array {

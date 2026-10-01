@@ -1,3 +1,13 @@
+/*
+ * Archivo: MainActivity.java
+ * Descripción: actividad principal Android. Gestiona permisos BLE, escaneo del
+ *              nodo GTI Joan, decodificación de iBeacon, UI y envío de medidas.
+ * Copyright: 2026 Joan (uso académico PBIO - UPV)
+ * Fecha: 2026-10-01
+ * Autor: Joan
+ * Aportación: recepción BLE del protocolo PBIO y conexión con LogicaFake.
+ */
+
 package org.jordi.prueba2025;
 
 import android.Manifest;
@@ -53,6 +63,10 @@ public class MainActivity extends AppCompatActivity {
     private int ultimoContadorO3Enviado = -1;
     private int ultimoContadorTemperaturaEnviado = -1;
 
+    /**
+     * Diseño lógico: onCreate() -->
+     * Descripción: enlaza UI, obtiene BluetoothAdapter y solicita permisos necesarios.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,6 +95,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Diseño lógico: tengoPermisosBLE() --> concedidos:VoF
+     * Descripción: comprueba los permisos requeridos según la versión de Android.
+     */
     private boolean tengoPermisosBLE() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             return ContextCompat.checkSelfPermission(
@@ -105,6 +123,10 @@ public class MainActivity extends AppCompatActivity {
         ) == PackageManager.PERMISSION_GRANTED;
     }
 
+    /**
+     * Diseño lógico: pedirPermisosSiHacenFalta() -->
+     * Descripción: solicita únicamente los permisos BLE/localización aún no concedidos.
+     */
     private void pedirPermisosSiHacenFalta() {
 
         if (tengoPermisosBLE()) {
@@ -162,6 +184,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Diseño lógico: comprobarBluetooth() -->
+     * Descripción: valida permisos/estado Bluetooth y obtiene el escáner BLE.
+     */
     private void comprobarBluetooth() {
 
         if (!tengoPermisosBLE()) {
@@ -186,14 +212,27 @@ public class MainActivity extends AppCompatActivity {
         textoEstado.setText("Listo para buscar " + NOMBRE_NODO);
     }
 
+    /**
+     * Diseño lógico: botonBuscarNuestroDispositivoBTLEPulsado() -->
+     * Descripción: inicia la búsqueda cuando el usuario pulsa Buscar.
+     * Nota: el parámetro View es un detalle de implementación Android y se omite del diseño.
+     */
     public void botonBuscarNuestroDispositivoBTLEPulsado(View v) {
         iniciarBusqueda();
     }
 
+    /**
+     * Diseño lógico: botonDetenerBusquedaDispositivosBTLEPulsado() -->
+     * Descripción: detiene el escaneo cuando el usuario pulsa Detener.
+     */
     public void botonDetenerBusquedaDispositivosBTLEPulsado(View v) {
         detenerBusqueda();
     }
 
+    /**
+     * Diseño lógico: iniciarBusqueda() -->
+     * Descripción: configura un filtro por nombre GTI Joan e inicia escaneo BLE rápido.
+     */
     private void iniciarBusqueda() {
 
         if (!tengoPermisosBLE()) {
@@ -212,11 +251,13 @@ public class MainActivity extends AppCompatActivity {
 
         callback = new ScanCallback() {
 
+            /** ResultadoBLE --> onScanResult() --> procesarResultado(). */
             @Override
             public void onScanResult(int callbackType, ScanResult result) {
                 procesarResultado(result);
             }
 
+            /** errorCode:N --> onScanFailed() -->. Actualiza el estado de error. */
             @Override
             public void onScanFailed(int errorCode) {
                 Log.e(TAG, "Scan fallido: " + errorCode);
@@ -247,6 +288,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Diseño lógico: detenerBusqueda() -->
+     * Descripción: detiene el callback de escaneo activo de forma segura.
+     */
     private void detenerBusqueda() {
 
         if (scanner == null || callback == null) {
@@ -267,6 +312,11 @@ public class MainActivity extends AppCompatActivity {
         textoEstado.setText("Escaneo detenido");
     }
 
+    /**
+     * Diseño lógico: resultado:ResultadoBLE --> procesarResultado() -->
+     * Descripción: valida iBeacon/UUID, decodifica ID-contador-valor, actualiza UI y
+     *              entrega la medida nueva a la lógica fake del cliente.
+     */
     private void procesarResultado(ScanResult resultado) {
 
         if (resultado == null || resultado.getScanRecord() == null) {
@@ -358,6 +408,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Diseño lógico:
+     * uuid:Texto, idMedida:N, valor:Z, contador:N, rssi:Z --> enviarMedidaSiEsNueva() -->
+     * Descripción: evita duplicados por contador y solicita insertar la medida al servidor.
+     */
     private void enviarMedidaSiEsNueva(
             String uuid,
             int idMedida,
@@ -409,6 +464,7 @@ public class MainActivity extends AppCompatActivity {
                 datos,
                 new PeticionarioREST.Callback() {
 
+                    /** Diseño lógico: respuesta:MedidaVista --> correcto() -->. Confirma guardado en la UI. */
                     @Override
                     public void correcto(
                             org.json.JSONObject respuesta
@@ -421,6 +477,7 @@ public class MainActivity extends AppCompatActivity {
                         );
                     }
 
+                    /** Diseño lógico: mensaje:Texto --> error() -->. Permite reintento y muestra error. */
                     @Override
                     public void error(String mensaje) {
 
@@ -451,6 +508,10 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
+    /**
+     * Diseño lógico: resultadoPermisos --> onRequestPermissionsResult() -->
+     * Descripción: continúa la inicialización BLE cuando el usuario responde a permisos.
+     */
     @Override
     public void onRequestPermissionsResult(
             int requestCode,
@@ -476,6 +537,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Diseño lógico: onResume() -->
+     * Descripción: vuelve a comprobar Bluetooth al recuperar el foco de la actividad.
+     */
     @Override
     protected void onResume() {
         super.onResume();
@@ -485,6 +550,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Diseño lógico: onDestroy() -->
+     * Descripción: detiene el escaneo antes de destruir la actividad.
+     */
     @Override
     protected void onDestroy() {
         detenerBusqueda();

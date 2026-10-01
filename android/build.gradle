@@ -1,3 +1,10 @@
+// Archivo: build.gradle
+// Descripción: configuración Gradle raíz del proyecto Android.
+// Copyright: 2026 Joan (uso académico PBIO - UPV)
+// Fecha: 2026-10-01
+// Autor: Joan
+// Aportación: configuración reproducible de plugins Gradle Android.
+
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     id 'com.android.application' version '7.3.0' apply false

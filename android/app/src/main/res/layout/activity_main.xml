@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-
+<!--
+ Archivo: activity_main.xml
+ Descripción: interfaz principal Android para visualizar y enviar medidas.
+ Copyright: 2026 Joan (uso académico PBIO - UPV)
+ Fecha: 2026-10-01
+ Autor: Joan
+ Aportación: interfaz mínima para la demostración Android del Sprint 0.
+-->
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"

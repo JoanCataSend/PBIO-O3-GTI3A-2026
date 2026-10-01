@@ -1,25 +1,19 @@
 # PBIO · Sprint 0 · GTI Joan
 
-Proyecto de la asignatura **Proyecto de Aplicaciones de Biometría y Medio Ambiente (PBIO)**.
+Proyecto académico de **Proyecto de Aplicaciones de Biometría y Medio Ambiente (PBIO)**.
 
-El objetivo del Sprint 0 es demostrar el funcionamiento completo de la arquitectura usando una **medida ficticia generada en la placa**, enviada por BLE al teléfono Android, almacenada mediante una API REST y la lógica de negocio en una base de datos MariaDB, y finalmente visualizada desde una página web.
+Esta rama representa el **Sprint 0 reproducible**: la placa no depende todavía de una lectura física del sensor, sino que genera medidas ficticias constantes para demostrar el funcionamiento completo de la arquitectura.
 
----
+## Objetivo
 
-# 1. Objetivo del Sprint 0
-
-La prueba de funcionamiento consiste en introducir una medida ficticia en el código de la placa y comprobar que esa misma medida recorre todo el sistema:
+La prueba debe conservar la misma medida de principio a fin:
 
 ```text
 SparkFun nRF52840
 (medida ficticia)
-        ↓
-   BLE / iBeacon
-        ↓
+        ↓ BLE / iBeacon
       Android
-        ↓
-   HTTPS / JSON
-        ↓
+        ↓ HTTPS / JSON
       API REST
         ↓
  Lógica de negocio
@@ -29,79 +23,68 @@ SparkFun nRF52840
     Página web
 ```
 
-Para esta versión se utilizan medidas constantes:
+Valores utilizados:
 
 ```text
-O₃ = 123 ppb
+O3 = 123 ppb
 Temperatura = -12 °C
 ```
 
-Estas medidas permiten comprobar de forma reproducible toda la cadena sin depender todavía de la adquisición física del sensor.
+## Criterio de aceptación
 
----
+El Sprint 0 se considera validado si los valores ficticios generados en el firmware aparecen con el mismo valor en:
 
-# 2. Resultado esperado del test de funcionamiento
+1. Monitor Serie;
+2. Android;
+3. MariaDB;
+4. web.
 
-La misma medida ficticia debe aparecer en:
-
-1. el monitor serie de Arduino;
-2. la aplicación Android;
-3. la base de datos MariaDB;
-4. la página web.
-
-Resultado esperado:
+Evidencias disponibles en:
 
 ```text
-O₃ = 123 ppb
-Temperatura = -12 °C
-```
-
-Si los valores introducidos en la placa aparecen finalmente en la web, se considera validado el funcionamiento completo del Sprint 0.
-
----
-
-# 3. Arquitectura del sistema
-
-La arquitectura utilizada separa las responsabilidades de cada parte del sistema:
-
-```text
-┌───────────────────────────┐
-│ SparkFun nRF52840         │
-│ Medidor + Publicador BLE  │
-└─────────────┬─────────────┘
-              │ iBeacon
-              ▼
-┌───────────────────────────┐
-│ Aplicación Android        │
-│ Recepción + lógica fake   │
-└─────────────┬─────────────┘
-              │ HTTPS / JSON
-              ▼
-┌───────────────────────────┐
-│ API REST PHP              │
-└─────────────┬─────────────┘
-              ▼
-┌───────────────────────────┐
-│ Lógica de negocio         │
-│ Logica.php                │
-└─────────────┬─────────────┘
-              ▼
-┌───────────────────────────┐
-│ MariaDB                   │
-│ Dispositivo               │
-│ TipoMedida                │
-│ Medida                    │
-└─────────────┬─────────────┘
-              ▼
-┌───────────────────────────┐
-│ Página web                │
-│ Consulta y visualización  │
-└───────────────────────────┘
+docs/evidencias/
 ```
 
 ---
 
-# 4. Estructura del repositorio
+# Arquitectura
+
+```text
+Medidor
+  ↓
+Publicador
+  ↓
+EmisoraBLE
+  ↓ iBeacon
+MainActivity
+  ↓
+LogicaFake.java
+  ↓
+PeticionarioREST
+  ↓ HTTPS
+web/api.php
+  ↓
+server/Logica.php
+  ↓
+MariaDB
+  ↑
+web/api.php
+  ↑
+LogicaFake.js
+  ↑
+app.js / navegador
+```
+
+Documentación ampliada:
+
+```text
+docs/architecture.md
+docs/disenos/
+```
+
+---
+
+# Estructura del repositorio
 
 ```text
 .
@@ -117,9 +100,11 @@ La arquitectura utilizada separa las responsabilidades de cada parte del sistema
 │
 ├── server/
 │   ├── Logica.php
-│   ├── SDBaseDatos.php
 │   ├── SDBaseDatos.example.php
 │   ├── database/
+│   │   ├── schema.sql
+│   │   ├── seed.sql
+│   │   └── drop.sql
 │   └── tests/
 │       ├── LogicaUnitTest.php
 │       └── ApiIntegracionTest.php
@@ -127,72 +112,76 @@ La arquitectura utilizada separa las responsabilidades de cada parte del sistema
 ├── web/
 │   ├── api.php
 │   ├── index.html
-│   ├── css/
+│   ├── css/styles.css
 │   └── js/
+│       ├── LogicaFake.js
+│       └── app.js
 │
 ├── docs/
+│   ├── disenos/
+│   ├── prompts/
+│   ├── evidencias/
+│   ├── sensor-real-final/
 │   ├── architecture.md
-│   ├── database.md
 │   ├── api.md
+│   ├── database.md
 │   ├── deployment-plesk.md
+│   ├── validation.md
 │   ├── class-audit.md
-│   └── validation.md
+│   └── rubrica-sprint0.md
+│
+├── scripts/
+│   └── test-sprint0.ps1
 │
 ├── .gitignore
 └── README.md
 ```
 
----
-
-# 5. Ramas del repositorio
-
-El repositorio utiliza varias ramas para separar el Sprint 0 del desarrollo posterior.
+No deben versionarse:
 
 ```text
-main
-master
-develop
-sensor-real-final
-```
-
-Uso de cada rama:
-
-- `main`: versión del **Sprint 0** con medidas ficticias.
-- `master`: versión estable del Sprint 0.
-- `develop`: rama destinada al desarrollo.
-- `sensor-real-final`: versión posterior con adquisición real del sensor de O₃ y temperatura.
-
-La versión que debe utilizarse para comprobar el **Sprint 0** es:
-
-```text
-main
-```
-
-La versión avanzada con el sensor físico se conserva de forma independiente en:
-
-```text
-sensor-real-final
+.git/
+.idea/
+.gradle/
+**/build/
+local.properties
+server/SDBaseDatos.php
+android.zip
 ```
 
 ---
 
-# 6. Firmware
+# Ramas
 
-## 6.1 Placa
+Estrategia utilizada:
 
-Placa utilizada:
+```text
+main              Sprint 0 reproducible
+master            versión estable Sprint 0
+develop           desarrollo
+sensor-real-final evolución con sensor físico
+```
+
+La entrega Sprint 0 debe consultarse en `main`/`master`.
+
+La adquisición física del sensor se conserva separada en `sensor-real-final` para no mezclarla con la demostración ficticia.
+
+---
+
+# Firmware
+
+Placa:
 
 ```text
 SparkFun Pro nRF52840 Mini
 ```
 
-Entorno:
+Entorno utilizado:
 
 ```text
 Arduino IDE
 Adafruit nRF52 Boards 1.7.0
 Bluefruit52Lib
-Adafruit TinyUSB 3.6.0
 ```
 
 Archivo principal:
@@ -201,71 +190,55 @@ Archivo principal:
 firmware/NodoO3/NodoO3.ino
 ```
 
----
+## Medidas Sprint 0
 
-## 6.2 Medidor del Sprint 0
-
-En el Sprint 0, `Medidor.h` no realiza una adquisición analógica real.
-
-Devuelve valores ficticios constantes:
+`Medidor.h` devuelve siempre:
 
 ```text
-O₃ = 123 ppb
-Temperatura = -12 °C
+medirO3()          -> 123 ppb
+medirTemperatura() -> -12 °C
 ```
 
-Esto permite validar el funcionamiento completo del sistema independientemente del sensor físico.
+No se realiza lectura ADC en esta rama.
 
----
-
-# 7. Comunicación BLE
-
-Nombre anunciado por el nodo:
+## BLE / iBeacon
 
 ```text
-GTI Joan
+Nombre: GTI Joan
+UUID: EPSG-GTI-PROY-3A
+Manufacturer: 0x004C
+Advertising: no conectable, escaneable
+Intervalo: 100 ms
 ```
 
-UUID:
-
-```text
-EPSG-GTI-PROY-3A
-```
-
-Formato utilizado:
-
-```text
-Major = [ID de medida: 8 bits][contador: 8 bits]
-Minor = valor de la medida
-```
-
-Identificadores utilizados:
+IDs:
 
 | Medida | ID |
 |---|---:|
-| CO₂ | 11 |
+| CO2 | 11 |
 | Temperatura | 12 |
 | Ruido | 13 |
-| O₃ | 14 |
+| O3 | 14 |
 
-En esta implementación se publican O₃ y temperatura.
+Codificación:
+
+```text
+Major = (idMedida << 8) | contador
+Minor = valor de la medida en 16 bits
+```
 
 Ejemplo:
 
 ```text
-O₃
-ID = 14
+ID O3 = 14
 contador = 16
-
-Major = (14 << 8) | 16
 Major = 3600
-
 Minor = 123
 ```
 
 ---
 
-# 8. Aplicación Android
+# Android
 
 Proyecto:
 
@@ -273,101 +246,104 @@ Proyecto:
 android/
 ```
 
-Paquete:
+Configuración actual:
 
 ```text
-org.jordi.prueba2025
+package / namespace = org.jordi.prueba2025
+compileSdk = 33
+minSdk = 28
+targetSdk = 32
+Android Gradle Plugin = 7.3.0
+Gradle wrapper = 7.4
+JDK recomendado = 17
 ```
 
-Se recomienda utilizar:
+Clases principales:
 
 ```text
-JDK 17
+MainActivity
+TramaIBeacon
+Utilidades
+MedidaEntrada
+LogicaFake
+PeticionarioREST
 ```
-
-La prueba BLE debe realizarse con un **teléfono Android físico**.
 
 La aplicación:
 
-1. busca el nodo `GTI Joan`;
-2. valida el UUID `EPSG-GTI-PROY-3A`;
-3. decodifica `Major` y `Minor`;
-4. identifica el tipo de medida;
-5. muestra O₃ y temperatura;
-6. envía cada nueva medida al servidor mediante HTTPS.
+1. solicita permisos BLE;
+2. busca `GTI Joan`;
+3. valida iBeacon y UUID `EPSG-GTI-PROY-3A`;
+4. obtiene ID y contador de Major;
+5. interpreta O3 como unsigned y temperatura como signed int16;
+6. muestra O3, temperatura, contador, RSSI y trama;
+7. evita duplicados por contador;
+8. envía `MedidaEntrada` al servidor.
 
-URL utilizada por Android:
-
-```text
-https://jcatsen.upv.edu.es/biometria/api.php
-```
-
----
-
-# 9. API REST
-
-La API está desplegada en:
+URL exacta:
 
 ```text
 https://jcatsen.upv.edu.es/biometria/api.php
 ```
 
-La API recibe las medidas desde Android y utiliza la lógica de negocio para acceder a la base de datos.
+La prueba BLE debe hacerse con un dispositivo Android físico o entorno que soporte BLE real.
 
 ---
 
-## 9.1 Health
+# Base de datos
+
+Motor:
 
 ```text
-https://jcatsen.upv.edu.es/biometria/api.php?accion=health
+MariaDB
 ```
 
-Respuesta esperada:
+Base:
 
-```json
-{
-  "ok": true,
-  "database": "jcatsen_pbio"
-}
+```text
+jcatsen_pbio
+```
+
+Tablas:
+
+```text
+Dispositivo
+TipoMedida
+Medida
+```
+
+Relaciones:
+
+```text
+Dispositivo 1 ─── N Medida
+TipoMedida  1 ─── N Medida
+```
+
+Scripts:
+
+```text
+server/database/schema.sql
+server/database/seed.sql
+server/database/drop.sql
+```
+
+La configuración real de acceso se guarda en:
+
+```text
+server/SDBaseDatos.php
+```
+
+pero ese fichero **no se versiona**. La plantilla pública es:
+
+```text
+server/SDBaseDatos.example.php
 ```
 
 ---
 
-## 9.2 Tipos de medida
+# Lógica de negocio
 
-```text
-https://jcatsen.upv.edu.es/biometria/api.php?accion=tipos
-```
-
-Tipos utilizados:
-
-```text
-11 → CO2
-12 → Temperatura
-13 → Ruido
-14 → O3
-```
-
----
-
-## 9.3 Dispositivos
-
-```text
-https://jcatsen.upv.edu.es/biometria/api.php?accion=dispositivos
-```
-
-Dispositivo del proyecto:
-
-```text
-uuid   = EPSG-GTI-PROY-3A
-nombre = GTI Joan
-```
-
----
-
-# 10. Lógica de negocio
-
-La lógica del servidor está implementada en:
+Archivo:
 
 ```text
 server/Logica.php
@@ -389,338 +365,254 @@ consultaMedidaVista()
 normalizarMedidaVista()
 ```
 
-La lógica de negocio se mantiene separada de la interfaz HTTP.
+La lógica no conoce códigos HTTP ni vistas.
 
----
-
-# 11. Base de datos
-
-Sistema utilizado:
+Diseño formal:
 
 ```text
-MariaDB
-```
-
-Base de datos:
-
-```text
-jcatsen_pbio
-```
-
-Tablas:
-
-```text
-Dispositivo
-TipoMedida
-Medida
-```
-
-Relaciones principales:
-
-```text
-Dispositivo 1 ───── N Medida
-TipoMedida  1 ───── N Medida
-```
-
-La tabla `Medida` almacena:
-
-```text
-medidaId
-dispositivoId
-tipoMedidaId
-valor
-contador
-rssi
-fechaHora
-```
-
-Los scripts de creación e inicialización se encuentran en:
-
-```text
-server/database/
-```
-
-Las credenciales reales del servidor **no deben almacenarse en GitHub**.
-
-Se utiliza:
-
-```text
-server/SDBaseDatos.php
-```
-
-en el servidor real, mientras que el repositorio mantiene un fichero de ejemplo:
-
-```text
-server/SDBaseDatos.example.php
+docs/disenos/03-logica-negocio.md
 ```
 
 ---
 
-# 12. Página web
+# API REST
 
-Página principal:
-
-```text
-https://jcatsen.upv.edu.es/biometria/
-```
-
-La web consulta la API REST y permite:
-
-- visualizar la última medida de O₃;
-- visualizar la última temperatura;
-- mostrar el último RSSI;
-- filtrar mediciones;
-- consultar el histórico;
-- representar la evolución temporal;
-- comprobar el estado del servidor.
-
-La interfaz también está adaptada a dispositivos móviles.
-
----
-
-# 13. Despliegue
-
-El sistema web está desplegado mediante Plesk bajo:
-
-```text
-https://jcatsen.upv.edu.es/biometria/
-```
-
-Estructura utilizada en el servidor:
-
-```text
-httpdocs/
-└── biometria/
-    ├── api.php
-    ├── index.html
-    ├── css/
-    ├── js/
-    └── server/
-```
-
-La configuración privada de conexión con MariaDB se completa únicamente en el servidor.
-
----
-
-# 14. Tests automáticos
-
-El proyecto incluye tests automáticos para Android, protocolo, servidor, lógica de negocio e integración con la API.
-
----
-
-## 14.1 Tests Android
-
-Desde:
-
-```text
-android/
-```
-
-En Windows:
-
-```powershell
-gradlew.bat test
-```
-
-En Linux/macOS:
-
-```bash
-./gradlew test
-```
-
-Tests incluidos:
-
-```text
-ProtocolUnitTest.java
-ServidorUnitTest.java
-ExampleInstrumentedTest.java
-```
-
----
-
-## 14.2 ProtocolUnitTest
-
-Comprueba:
-
-- codificación del ID de medida y contador dentro de `Major`;
-- decodificación de valores negativos de `Minor`.
-
-Ejemplo comprobado:
-
-```text
-ID = 14
-contador = 16
-Major = 3600
-```
-
-También se comprueba la decodificación de una temperatura negativa.
-
----
-
-## 14.3 ServidorUnitTest
-
-Comprueba que la aplicación Android utiliza la URL correcta del servidor:
+Endpoint:
 
 ```text
 https://jcatsen.upv.edu.es/biometria/api.php
 ```
 
----
-
-# 15. Tests automáticos de la lógica de negocio
-
-Archivo:
+## Health
 
 ```text
-server/tests/LogicaUnitTest.php
+GET https://jcatsen.upv.edu.es/biometria/api.php?accion=health
 ```
 
-Desde la raíz del repositorio, en Windows con XAMPP:
+Esperado:
+
+```json
+{"ok":true,"database":"jcatsen_pbio"}
+```
+
+## Dispositivos
+
+```text
+GET https://jcatsen.upv.edu.es/biometria/api.php?accion=dispositivos
+```
+
+## Tipos
+
+```text
+GET https://jcatsen.upv.edu.es/biometria/api.php?accion=tipos
+```
+
+## Listar medidas
+
+```text
+GET https://jcatsen.upv.edu.es/biometria/api.php
+```
+
+Filtros opcionales:
+
+```text
+dispositivoId
+tipoMedidaId
+desde
+hasta
+```
+
+## Insertar medida
+
+```text
+POST https://jcatsen.upv.edu.es/biometria/api.php
+Content-Type: application/json
+```
+
+Ejemplo:
+
+```json
+{
+  "uuid": "EPSG-GTI-PROY-3A",
+  "tipoMedidaId": 14,
+  "valor": 123,
+  "contador": 16,
+  "rssi": -58
+}
+```
+
+---
+
+# Web
+
+URL:
+
+```text
+https://jcatsen.upv.edu.es/biometria/
+```
+
+Funciones:
+
+- últimas medidas de O3 y temperatura;
+- último RSSI;
+- filtros;
+- histórico;
+- gráfica temporal;
+- refresco automático cada 5 s;
+- estado de conexión;
+- interfaz responsive.
+
+La versión móvil está optimizada también para pantallas pequeñas (~375 CSS px): controles táctiles, safe-area, dos tarjetas prioritarias, tabla desplazable y Canvas adaptable.
+
+---
+
+# Despliegue Plesk
+
+Estructura pública:
+
+```text
+httpdocs/
+└── biometria/
+    ├── index.html
+    ├── api.php
+    ├── css/
+    ├── js/
+    └── server/
+        ├── Logica.php
+        └── SDBaseDatos.php
+```
+
+Guía completa:
+
+```text
+docs/deployment-plesk.md
+```
+
+La arquitectura actual **no utiliza** `pbio.jcatsen.upv.edu.es` ni Node.js.
+
+---
+
+# Tests automáticos
+
+## PHP · lógica de negocio
+
+Desde la raíz en Windows/XAMPP:
 
 ```powershell
 C:\xampp\php\php.exe server\tests\LogicaUnitTest.php
 ```
 
-Este test comprueba automáticamente:
-
-- validación de `MedidaEntrada`;
-- presencia de campos obligatorios;
-- UUID no vacío;
-- validación de campos enteros;
-- rango del contador entre 0 y 255;
-- aceptación de los límites 0 y 255;
-- normalización de `MedidaVista`;
-- conversión de campos numéricos a enteros;
-- conservación de los valores;
-- estructura de la consulta que relaciona `Medida`, `Dispositivo` y `TipoMedida`.
-
-Resultado obtenido:
+Resultado validado durante el desarrollo:
 
 ```text
-[OK] Una MedidaEntrada valida supera la validacion
-[OK] Se rechaza una medida sin uuid
-[OK] Se rechaza un uuid vacio
-[OK] Se rechaza un valor que no es entero
-[OK] Se rechaza contador menor que 0
-[OK] Se rechaza contador mayor que 255
-[OK] Los contadores 0 y 255 son validos
-[OK] MedidaVista normaliza los campos numericos a enteros
-[OK] MedidaVista conserva correctamente los valores numericos
-[OK] La consulta MedidaVista utiliza las tres tablas del diseño
-
 Resultado: 10/10 tests correctos.
 LOGICA UNIT TEST: OK
 ```
 
----
+Comprueba:
 
-# 16. Test automático de integración
+- campos obligatorios;
+- UUID válido;
+- campos enteros;
+- límites de contador;
+- normalización de `MedidaVista`;
+- estructura de la consulta con las tres tablas.
 
-Archivo:
-
-```text
-server/tests/ApiIntegracionTest.php
-```
-
-Ejecutar desde la raíz del repositorio:
+## PHP · integración API
 
 ```powershell
 C:\xampp\php\php.exe server\tests\ApiIntegracionTest.php
 ```
 
-Este test comprueba automáticamente la integración real:
+Resultado validado:
 
 ```text
-Cliente
-   ↓ HTTPS
-API REST
-   ↓
-Lógica de negocio
-   ↓
-MariaDB
-```
-
-Comprueba:
-
-- endpoint `health`;
-- conexión con la base de datos `jcatsen_pbio`;
-- existencia del dispositivo `GTI Joan`;
-- UUID `EPSG-GTI-PROY-3A`;
-- tipo O₃ con ID 14 y unidad `ppb`;
-- tipo Temperatura con ID 12;
-- listado de medidas.
-
-Resultado obtenido:
-
-```text
-[OK] El endpoint health responde correctamente
-[OK] La API confirma la base de datos jcatsen_pbio
-[OK] La API devuelve el dispositivo GTI Joan
-[OK] La API devuelve O3 con ID 14 y unidad ppb
-[OK] La API devuelve Temperatura con ID 12
-[OK] La API devuelve una coleccion de medidas
-
 Resultado: 6/6 tests correctos.
 API INTEGRACION TEST: OK
 ```
 
-Este test no inserta ni elimina medidas.
+Comprueba de forma **solo lectura**:
+
+- `health`;
+- base `jcatsen_pbio`;
+- dispositivo `GTI Joan`;
+- O3 ID 14 / ppb;
+- Temperatura ID 12;
+- listado de medidas.
+
+No se abre MariaDB a Internet para ejecutar este test.
+
+## Android · unit tests
+
+Desde `android/`:
+
+```powershell
+.\gradlew.bat test
+```
+
+Casos principales:
+
+```text
+ID14 + contador16 -> Major 3600
+FF F4 -> -12
+00 7B -> 123
+URL API exacta
+ruta /biometria
+```
+
+## Android · instrumented test
+
+Con dispositivo/emulador conectado:
+
+```powershell
+.\gradlew.bat connectedAndroidTest
+```
+
+Comprueba el package instalado.
+
+## Script conjunto Windows
+
+Desde la raíz:
+
+```powershell
+.\scripts\test-sprint0.ps1
+```
+
+Ejecuta los dos tests PHP y los unit tests Android.
 
 ---
 
-# 17. Test manual completo del Sprint 0
+# Test manual de extremo a extremo
 
-Para comprobar todo el sistema:
+## 1. Firmware
 
-## Paso 1
-
-Compilar y cargar el firmware en la placa.
-
----
-
-## Paso 2
-
-Abrir el monitor serie.
-
-Debe aparecer:
+Cargar `NodoO3.ino` y comprobar en Monitor Serie:
 
 ```text
 O3 = 123 ppb
 Temperatura = -12 C
 ```
 
----
+## 2. Android
 
-## Paso 3
-
-Abrir la aplicación Android en un teléfono físico.
-
-Debe aparecer:
+Pulsar `Buscar GTI Joan` y comprobar:
 
 ```text
-O₃ = 123 ppb
-Temperatura = -12 °C
+O3: 123 ppb
+Temperatura: -12 °C
+Servidor: medida guardada
 ```
 
-Además, Android debe indicar que la medida ha sido enviada o guardada en el servidor.
+## 3. MariaDB
 
----
-
-## Paso 4
-
-Comprobar MariaDB.
-
-La tabla:
+Comprobar nuevas filas de tipo:
 
 ```text
-Medida
+14 -> O3
+12 -> Temperatura
 ```
 
-debe contener las nuevas mediciones recibidas.
-
----
-
-## Paso 5
+## 4. Web
 
 Abrir:
 
@@ -728,97 +620,98 @@ Abrir:
 https://jcatsen.upv.edu.es/biometria/
 ```
 
-La web debe mostrar:
+y comprobar:
 
 ```text
-O₃ = 123 ppb
+O3 = 123 ppb
 Temperatura = -12 °C
 ```
 
----
-
-# 18. Criterio de aceptación del Sprint 0
-
-El Sprint 0 se considera validado si:
+Procedimiento completo:
 
 ```text
-Medida ficticia
-      ↓
-Arduino
-      ↓
-BLE
-      ↓
-Android
-      ↓
-HTTPS POST
-      ↓
-API REST
-      ↓
-Lógica de negocio
-      ↓
-MariaDB
-      ↓
-HTTPS GET
-      ↓
-Página web
-```
-
-mantiene correctamente los valores:
-
-```text
-O₃ = 123 ppb
-Temperatura = -12 °C
-```
-
-de principio a fin.
-
----
-
-# 19. Documentación del proyecto
-
-La carpeta:
-
-```text
-docs/
-```
-
-contiene la documentación técnica.
-
-Archivos principales:
-
-- `architecture.md`: arquitectura y flujo completo.
-- `database.md`: diseño de la base de datos.
-- `api.md`: diseño del API REST.
-- `deployment-plesk.md`: despliegue.
-- `class-audit.md`: correspondencia entre diseño y código.
-- `validation.md`: validaciones y criterios de aceptación.
-
----
-
-# 20. Estado actual
-
-## Sprint 0
-
-```text
-Medidas ficticias Arduino ✅
-BLE / iBeacon ✅
-Android ✅
-API REST ✅
-Lógica de negocio ✅
-MariaDB ✅
-Página web ✅
-Tests unitarios lógica 10/10 ✅
-Test integración API 6/6 ✅
+docs/validation.md
 ```
 
 ---
 
-## Versión con sensor real
+# Diseños en notación de la asignatura
 
-La evolución posterior del proyecto, con adquisición física de O₃ y temperatura, está conservada en:
+Carpeta:
+
+```text
+docs/disenos/
+```
+
+Contenido:
+
+```text
+00-notacion-y-tipos.md
+01-firmware.md
+02-android.md
+03-logica-negocio.md
+04-base-datos.md
+05-api-rest.md
+06-web.md
+07-protocolo-y-flujo.md
+08-tests-criterios.md
+```
+
+Los diseños usan tipos abstractos y firmas lógicas independientes del lenguaje.
+
+---
+
+# Prompts reproducibles de IA
+
+Carpeta:
+
+```text
+docs/prompts/
+```
+
+Incluye un **prompt maestro** capaz de describir el proyecto completo a otra IA sin contexto previo y prompts separados para:
+
+- firmware;
+- Android;
+- backend/BBDD/API;
+- web;
+- tests/documentación.
+
+Los prompts especifican estructura, nombres, tipos, comentarios, tests, criterios de aceptación y restricciones.
+
+---
+
+# Relación con la rúbrica
+
+Checklist:
+
+```text
+docs/rubrica-sprint0.md
+```
+
+Resume dónde está la evidencia de:
+
+- buenas prácticas;
+- ingeniería inversa y diseño;
+- arquitectura/lógica;
+- tests;
+- prompts/uso de IA;
+- test de funcionamiento.
+
+---
+
+# Versión con sensor real
+
+La evolución posterior con lectura física de O3 y temperatura se conserva en la rama:
 
 ```text
 sensor-real-final
 ```
 
-Esta rama se mantiene separada para no modificar la versión entregable y reproducible del Sprint 0.
+La documentación específica que todavía aparece en esta copia del proyecto se encuentra aislada en:
+
+```text
+docs/sensor-real-final/
+```
+
+y **no describe el Sprint 0 ficticio**.
