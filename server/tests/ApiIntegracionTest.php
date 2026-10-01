@@ -1,0 +1,189 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * ApiIntegracionTest.php
+ *
+ * Test automático de integración contra el servidor desplegado.
+ * Comprueba la cadena:
+ *
+ * cliente -> HTTPS -> API REST -> lógica de negocio -> MariaDB
+ *
+ * No accede directamente a MariaDB desde el ordenador local,
+ * por lo que no necesita abrir el puerto de la base de datos.
+ *
+ * Este test es de solo lectura: no inserta ni borra medidas.
+ *
+ * Ejecutar desde la raíz del repositorio:
+ *
+ * C:\xampp\php\php.exe server\tests\ApiIntegracionTest.php
+ */
+
+const API_URL =
+    'https://jcatsen.upv.edu.es/biometria/api.php';
+
+$testsEjecutados = 0;
+$testsCorrectos = 0;
+
+function comprobar(
+    bool $condicion,
+    string $nombre
+): void {
+    global $testsEjecutados, $testsCorrectos;
+
+    $testsEjecutados++;
+
+    if (!$condicion) {
+        echo "[FALLO] $nombre" . PHP_EOL;
+        exit(1);
+    }
+
+    $testsCorrectos++;
+    echo "[OK] $nombre" . PHP_EOL;
+}
+
+function getJson(string $url): array
+{
+    $contexto = stream_context_create([
+        'http' => [
+            'method' => 'GET',
+            'timeout' => 10,
+            'ignore_errors' => true
+        ]
+    ]);
+
+    $respuesta = @file_get_contents(
+        $url,
+        false,
+        $contexto
+    );
+
+    if ($respuesta === false) {
+        throw new RuntimeException(
+            'No se pudo acceder a ' . $url
+        );
+    }
+
+    $datos = json_decode(
+        $respuesta,
+        true,
+        512,
+        JSON_THROW_ON_ERROR
+    );
+
+    if (!is_array($datos)) {
+        throw new RuntimeException(
+            'La respuesta no contiene JSON valido'
+        );
+    }
+
+    return $datos;
+}
+
+
+/*
+ * 1. Health:
+ *    API -> lógica -> MariaDB.
+ */
+$health = getJson(
+    API_URL . '?accion=health'
+);
+
+comprobar(
+    ($health['ok'] ?? false) === true,
+    'El endpoint health responde correctamente'
+);
+
+comprobar(
+    ($health['database'] ?? '') === 'jcatsen_pbio',
+    'La API confirma la base de datos jcatsen_pbio'
+);
+
+
+/*
+ * 2. Dispositivo del proyecto.
+ */
+$dispositivos = getJson(
+    API_URL . '?accion=dispositivos'
+);
+
+$dispositivoEncontrado = false;
+
+foreach ($dispositivos as $dispositivo) {
+    if (
+        ($dispositivo['uuid'] ?? '')
+            === 'EPSG-GTI-PROY-3A'
+        && ($dispositivo['nombre'] ?? '')
+            === 'GTI Joan'
+    ) {
+        $dispositivoEncontrado = true;
+        break;
+    }
+}
+
+comprobar(
+    $dispositivoEncontrado,
+    'La API devuelve el dispositivo GTI Joan'
+);
+
+
+/*
+ * 3. Tipos de medida utilizados por el proyecto.
+ */
+$tipos = getJson(
+    API_URL . '?accion=tipos'
+);
+
+$o3Encontrado = false;
+$temperaturaEncontrada = false;
+
+foreach ($tipos as $tipo) {
+    if (
+        (int)($tipo['tipoMedidaId'] ?? -1) === 14
+        && ($tipo['nombre'] ?? '') === 'O3'
+        && ($tipo['unidad'] ?? '') === 'ppb'
+    ) {
+        $o3Encontrado = true;
+    }
+
+    if (
+        (int)($tipo['tipoMedidaId'] ?? -1) === 12
+        && ($tipo['nombre'] ?? '') === 'Temperatura'
+    ) {
+        $temperaturaEncontrada = true;
+    }
+}
+
+comprobar(
+    $o3Encontrado,
+    'La API devuelve O3 con ID 14 y unidad ppb'
+);
+
+comprobar(
+    $temperaturaEncontrada,
+    'La API devuelve Temperatura con ID 12'
+);
+
+
+/*
+ * 4. Listado de medidas.
+ */
+$medidas = getJson(API_URL);
+
+comprobar(
+    is_array($medidas),
+    'La API devuelve una coleccion de medidas'
+);
+
+
+echo PHP_EOL;
+echo "Resultado: "
+    . $testsCorrectos
+    . "/"
+    . $testsEjecutados
+    . " tests correctos."
+    . PHP_EOL;
+
+echo "API INTEGRACION TEST: OK"
+    . PHP_EOL;
