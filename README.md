@@ -4,6 +4,41 @@ Proyecto académico de **Proyecto de Aplicaciones de Biometría y Medio Ambiente
 
 Esta rama representa el **Sprint 0 reproducible**: la placa no depende todavía de una lectura física del sensor, sino que genera medidas ficticias constantes para demostrar el funcionamiento completo de la arquitectura.
 
+
+## Estructura preparada para el Sprint Reviewer Agent
+
+Además del árbol operativo del proyecto, esta entrega incluye una **vista canónica de revisión** que cumple de forma literal la estructura exigida por `AGENTS.md`:
+
+```text
+author.md
+doc/
+  firmware_design.md
+  android_design.md
+  business_logic_design.md
+  database_design.md
+  api_rest_design.md
+  web_design.md
+src/
+  firmware/
+  android/
+  business_logic/
+  database/
+  api_rest/
+  web/
+```
+
+Cada `doc/xxx_design.md` corresponde exactamente con `src/xxx/` y contiene las tres secciones requeridas: **Component Design**, **Design Clarifications** y **General Rules**. Las reglas generales declaran explícitamente lenguaje objetivo, formato de cabeceras de funciones/métodos, legibilidad y pruebas automatizadas.
+
+El árbol `src/` no introduce una implementación alternativa: es un **mirror verificable** del código operativo, conservado en sus carpetas nativas para que Arduino, Android/Gradle y Plesk sigan funcionando sin reescrituras de rutas. La igualdad de ambas vistas puede comprobarse con:
+
+```text
+python scripts/audit-agent-ready.py
+```
+
+La auditoría estructural incluida comprueba automáticamente `author.md`, `doc/`, `src/`, correspondencia diseño/componente, secciones obligatorias, reglas generales, delimitadores `--------------------`, ausencia de secretos locales y coincidencia byte a byte entre el código operativo y su vista canónica.
+
+---
+
 ## Objetivo
 
 La prueba debe conservar la misma medida de principio a fin:
@@ -86,8 +121,14 @@ docs/disenos/
 
 # Estructura del repositorio
 
+La raíz contiene primero el contrato de revisión (`author.md`, `doc/`, `src/`) y, además, las carpetas operativas usadas por las herramientas reales.
+
 ```text
 .
+├── author.md
+├── doc/                  # especificaciones xxx_design.md para el agente
+├── src/                  # componentes xxx emparejados con cada diseño
+│
 ├── firmware/
 │   └── NodoO3/
 │       ├── NodoO3.ino
@@ -128,10 +169,13 @@ docs/disenos/
 │   ├── deployment-plesk.md
 │   ├── validation.md
 │   ├── class-audit.md
+│   ├── agent-readiness.md
 │   └── rubrica-sprint0.md
 │
 ├── scripts/
-│   └── test-sprint0.ps1
+│   ├── test-sprint0.ps1
+│   ├── audit-agent-ready.py
+│   └── test-agent-ready.ps1
 │
 ├── .gitignore
 └── README.md
