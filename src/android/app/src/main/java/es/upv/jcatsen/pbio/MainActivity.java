@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * --------------------
-     * Diseño lógico: onCreate() -->
+     * Diseño lógico: onCreate()
      * Descripción: enlaza UI, obtiene BluetoothAdapter y solicita permisos necesarios.
      * --------------------
      */
@@ -90,11 +90,41 @@ public class MainActivity extends AppCompatActivity {
         }
 
         pedirPermisosSiHacenFalta();
+        comprobarServidor();
 
         // Solo comprobamos/arrancamos Bluetooth si ya están concedidos.
         if (tengoPermisosBLE()) {
             comprobarBluetooth();
         }
+    }
+
+    /**
+     * --------------------
+     * Diseño lógico: comprobarServidor() --> estado: Text
+     * Descripción: comprueba desde el propio teléfono que la API REST es accesible.
+     * --------------------
+     */
+    private void comprobarServidor() {
+        textoServidor.setText("Servidor: comprobando conexión...");
+
+        LogicaFake.comprobarServidor(
+                new PeticionarioREST.Callback() {
+                    @Override
+                    public void correcto(org.json.JSONObject respuesta) {
+                        runOnUiThread(() ->
+                                textoServidor.setText("Servidor: conectado")
+                        );
+                    }
+
+                    @Override
+                    public void error(String mensaje) {
+                        Log.e(TAG, "Error health REST: " + mensaje);
+                        runOnUiThread(() ->
+                                textoServidor.setText("Servidor: " + mensaje)
+                        );
+                    }
+                }
+        );
     }
 
     /**
@@ -129,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * --------------------
-     * Diseño lógico: pedirPermisosSiHacenFalta() -->
+     * Diseño lógico: pedirPermisosSiHacenFalta()
      * Descripción: solicita únicamente los permisos BLE/localización aún no concedidos.
      * --------------------
      */
@@ -192,7 +222,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * --------------------
-     * Diseño lógico: comprobarBluetooth() -->
+     * Diseño lógico: comprobarBluetooth()
      * Descripción: valida permisos/estado Bluetooth y obtiene el escáner BLE.
      * --------------------
      */
@@ -222,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * --------------------
-     * Diseño lógico: botonBuscarNuestroDispositivoBTLEPulsado() -->
+     * Diseño lógico: botonBuscarNuestroDispositivoBTLEPulsado()
      * Descripción: inicia la búsqueda cuando el usuario pulsa Buscar.
      * Nota: el parámetro View es un detalle de implementación Android y se omite del diseño.
      * --------------------
@@ -233,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * --------------------
-     * Diseño lógico: botonDetenerBusquedaDispositivosBTLEPulsado() -->
+     * Diseño lógico: botonDetenerBusquedaDispositivosBTLEPulsado()
      * Descripción: detiene el escaneo cuando el usuario pulsa Detener.
      * --------------------
      */
@@ -243,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * --------------------
-     * Diseño lógico: iniciarBusqueda() -->
+     * Diseño lógico: iniciarBusqueda()
      * Descripción: configura un filtro por nombre GTI Joan e inicia escaneo BLE rápido.
      * --------------------
      */
@@ -267,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
 
             /**
              * --------------------
-             * Diseño lógico: resultado: ResultadoBLE --> onScanResult() -->
+             * Diseño lógico: resultado: ResultadoBLE --> onScanResult()
              * Descripción: delega el resultado BLE válido en el procesado del dominio.
              * --------------------
              */
@@ -278,7 +308,7 @@ public class MainActivity extends AppCompatActivity {
 
             /**
              * --------------------
-             * Diseño lógico: error_code: N --> onScanFailed() -->
+             * Diseño lógico: error_code: N --> onScanFailed()
              * Descripción: actualiza el estado cuando Android informa de un fallo de escaneo.
              * --------------------
              */
@@ -314,7 +344,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * --------------------
-     * Diseño lógico: detenerBusqueda() -->
+     * Diseño lógico: detenerBusqueda()
      * Descripción: detiene el callback de escaneo activo de forma segura.
      * --------------------
      */
@@ -340,7 +370,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * --------------------
-     * Diseño lógico: resultado: ResultadoBLE --> procesarResultado() -->
+     * Diseño lógico: resultado: ResultadoBLE --> procesarResultado()
      * Descripción: valida iBeacon/UUID, decodifica ID-contador-valor, actualiza UI y
      * entrega la medida nueva a la lógica fake del cliente.
      * --------------------
@@ -439,7 +469,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * --------------------
      * Diseño lógico:
-     * uuid: Text, id_medida: N, valor: Z, contador: N, rssi: Z --> enviarMedidaSiEsNueva() -->
+     * uuid: Text, id_medida: N, valor: Z, contador: N, rssi: Z --> enviarMedidaSiEsNueva()
      * Descripción: evita duplicados por contador y solicita insertar la medida al servidor.
      * --------------------
      */
@@ -496,7 +526,7 @@ public class MainActivity extends AppCompatActivity {
 
                     /**
                      * --------------------
-                     * Diseño lógico: respuesta: MedidaVista --> correcto() -->
+                     * Diseño lógico: respuesta: MedidaVista --> correcto()
                      * Descripción: confirma en la interfaz que el servidor guardó la medida.
                      * --------------------
                      */
@@ -514,7 +544,7 @@ public class MainActivity extends AppCompatActivity {
 
                     /**
                      * --------------------
-                     * Diseño lógico: mensaje: Text --> error() -->
+                     * Diseño lógico: mensaje: Text --> error()
                      * Descripción: permite reintento y muestra el fallo de comunicación.
                      * --------------------
                      */
@@ -540,7 +570,7 @@ public class MainActivity extends AppCompatActivity {
 
                         runOnUiThread(() ->
                                 textoServidor.setText(
-                                        "Servidor: error de envío"
+                                        "Servidor: " + mensaje
                                 )
                         );
                     }
@@ -550,7 +580,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * --------------------
-     * Diseño lógico: resultado: ResultadoPermisos --> onRequestPermissionsResult() -->
+     * Diseño lógico: resultado: ResultadoPermisos --> onRequestPermissionsResult()
      * Descripción: continúa la inicialización BLE cuando el usuario responde a permisos.
      * --------------------
      */
@@ -581,7 +611,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * --------------------
-     * Diseño lógico: onResume() -->
+     * Diseño lógico: onResume()
      * Descripción: vuelve a comprobar Bluetooth al recuperar el foco de la actividad.
      * --------------------
      */
@@ -596,7 +626,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * --------------------
-     * Diseño lógico: onDestroy() -->
+     * Diseño lógico: onDestroy()
      * Descripción: detiene el escaneo antes de destruir la actividad.
      * --------------------
      */

@@ -15,8 +15,8 @@ const LogicaFake = (() => {
 
     /**
      * --------------------
-     * Diseño lógico: url: Text, opciones: PeticionHTTP --> pedir() --> datos: Json
-     * Descripción: ejecuta fetch, interpreta Json y normaliza errores HTTP.
+     * Diseño lógico: url: Text, opciones: PeticionHTTP --> pedir() --> datos: Text
+     * Descripción: ejecuta fetch, interpreta Text y normaliza errores HTTP.
      * --------------------
      */
     async function pedir(url, opciones = {}) {

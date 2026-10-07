@@ -6,13 +6,11 @@
 **Implementación:** `src/android/`  
 **Lenguaje:** Java.
 
-El componente Android recibe iBeacon, extrae la medida, actualiza la interfaz y llama a una lógica fake que representa la interfaz remota de la lógica de negocio. La actividad no construye HTTP directamente.
+El componente Android recibe anuncios iBeacon, extrae la medida, actualiza la interfaz y llama a una lógica fake que representa la interfaz remota de la lógica de negocio. La actividad no construye HTTP directamente.
 
 ### Tipos lógicos
 
 ```text
-Json = Text
-
 MedidaEntrada = (
     uuid: Text,
     tipo_medida_id: N,
@@ -47,7 +45,7 @@ ResultadoPermisos = (
 )
 ```
 
-Constantes:
+Constantes de dominio:
 
 ```text
 NOMBRE_NODO = "GTI Joan"
@@ -71,70 +69,72 @@ MainActivity
 
 ### Clase `MedidaEntrada`
 
+Los atributos son privados. El constructor modifica el estado de la instancia y `toJson()` solo lo consulta.
+
 ```text
-                    -------- MedidaEntrada --------
-                    | uuid: Text
-                    | tipo_medida_id: N
-                    | valor: Z
-                    | contador: N
-                    | rssi: Z
-                    |
-uuid: Text,          |
-tipo_medida_id: N, |
-valor: Z,           |
-contador: N,        |
-rssi: Z         --> MedidaEntrada() -->
-                    |
-                    |
-         json: Json <-- toJson() <--
-                    |
-                    -------------------------------
+                 -------- MedidaEntrada --------
+                 | uuid: Text
+                 | tipo_medida_id: N
+                 | valor: Z
+                 | contador: N
+                 | rssi: Z
+                 |
+uuid: Text,      |
+tipo_medida_id: N,
+valor: Z,
+contador: N,
+rssi: Z      --> MedidaEntrada() -->
+                 |
+                 |
+      texto: Text <-- toJson() <--
+                 |
+                 -------------------------------
+```
+
+Firma matemática equivalente del serializador:
+
+```text
+toJson() --> texto: Text
 ```
 
 ### Clase `TramaIBeacon`
 
-Estado privado:
+El constructor copia los bytes recibidos antes de analizarlos. Los getters de arrays devuelven copias para que el estado privado no pueda modificarse desde fuera.
 
 ```text
-los_bytes: [N]
-uuid: [N]_16
-major: [N]_2
-minor: [N]_2
-tx_power: Z
-valida: B
-```
-
-`analizar()` es privado y muta ese estado.
-
-```text
-                     ---------- TramaIBeacon ----------
-                     | los_bytes: [N]
-                     | uuid: [N]_16
-                     | major: [N]_2
-                     | minor: [N]_2
-                     | tx_power: Z
-                     | valida: B
-                     |
-                     | analizar() -->
-                     |
+                    -------- TramaIBeacon --------
+                    | los_bytes: [N]
+                    | uuid: [N]_16
+                    | major: [N]_2
+                    | minor: [N]_2
+                    | tx_power: Z
+                    | valida: B
+                    | analizar() -->
+                    |
 bytes: [N]       --> TramaIBeacon() -->
-                     |
-          valida: B <-- esValida() <--
-                     |
-     uuid: [N]_16 <-- getUUID() <--
-                     |
-      major: [N]_2 <-- getMajor() <--
-                     |
-      minor: [N]_2 <-- getMinor() <--
-                     |
-        tx_power: Z <-- getTxPower() <--
-                     |
-        bytes: [N] <-- getLosBytes() <--
-                     |
-                     ---------------------------------
+                    |
+                    |
+         valida: B <-- esValida() <--
+                    |
+                    |
+      uuid: [N]_16 <-- getUUID() <--
+                    |
+                    |
+       major: [N]_2 <-- getMajor() <--
+                    |
+                    |
+       minor: [N]_2 <-- getMinor() <--
+                    |
+                    |
+         tx_power: Z <-- getTxPower() <--
+                    |
+                    |
+         bytes: [N] <-- getLosBytes() <--
+                    |
+                    --------------------------------
 ```
 
-Algoritmo de `analizar()`:
+Algoritmo lógico de `analizar()`:
 
 ```text
 buscar la secuencia 4C 00 02 15
@@ -149,59 +149,136 @@ si existe y hay 25 bytes desde el prefijo:
 
 ### Clase estática `Utilidades`
 
+No mantiene estado de instancia. Todas las operaciones son independientes de estado (`--x`).
+
 ```text
-bytes: [N]   --> bytesToString() --> texto: Text      --x
-bytes: [N]   --> bytesToHexString() --> hexadecimal: Text --x
-bytes: [N]   --> bytesToUnsignedInt() --> valor: N    --x
-bytes: [N]_2 --> bytesToSignedInt16() --> valor: Z    --x
+                 ---------- Utilidades ----------
+                 |
+bytes: [N]    --> bytesToString() --x
+texto: Text   <--
+                 |
+                 |
+bytes: [N]    --> bytesToHexString() --x
+hexadecimal: Text <--
+                 |
+                 |
+bytes: [N]    --> bytesToUnsignedInt() --x
+valor: N      <--
+                 |
+                 |
+bytes: [N]_2  --> bytesToSignedInt16() --x
+valor: Z      <--
+                 |
+                 --------------------------------
 ```
 
-### `LogicaFake`
+### Clase estática `LogicaFake`
+
+El callback Java es un mecanismo de implementación y se elimina del diseño lógico, tal como exige la notación oficial.
 
 ```text
-datos: MedidaEntrada --> insertarMedida() --> medida: MedidaVista --x
+                 ---------- LogicaFake ----------
+                 |
+                 | comprobarServidor() --x
+estado: Text     <--
+                 |
+                 |
+datos: MedidaEntrada --> insertarMedida() --x
+medida: MedidaVista  <--
+                 |
+                 -------------------------------
 ```
 
-Responsabilidad:
+Firma matemática equivalente:
 
 ```text
-MedidaEntrada -> serializar -> PeticionarioREST -> respuesta de dominio
+comprobarServidor() --> estado: Text
+datos: MedidaEntrada --> insertarMedida() --> medida: MedidaVista
 ```
 
-### `PeticionarioREST`
+### Clase estática `PeticionarioREST`
 
-La asincronía y el callback son mecanismos Java; el contrato lógico elimina ese detalle:
+La asincronía, el `ExecutorService` y los callbacks son detalles de implementación. El contrato lógico conserva solo entradas y salidas.
 
 ```text
-url: Text, datos: Json --> postJson() --> respuesta: Json --x
+                 -------- PeticionarioREST --------
+                 |
+url: Text      --> getJson() --x
+respuesta: Text <--
+                 |
+                 |
+url: Text,       |
+datos: Text   --> postJson() --x
+respuesta: Text <--
+                 |
+                 |
+                 | entrada: Text --> leerTexto() --x
+                 | texto: Text <--
+                 |
+                 ----------------------------------
+```
+
+Firmas matemáticas equivalentes:
+
+```text
+url: Text --> getJson() --> respuesta: Text
+url: Text, datos: Text --> postJson() --> respuesta: Text
 entrada: Text --> leerTexto() --> texto: Text
 ```
 
-### `MainActivity`
+### Clase `MainActivity`
 
-Estado relevante:
+El diseño lógico omite referencias `View`, `Bundle`, callbacks, hilos y objetos del framework. Solo se representan datos de dominio y estado propio relevante.
+La actividad realiza además una comprobación de conectividad REST al iniciar y muestra el motivo concreto de cualquier fallo de red/HTTP/TLS.
+
+Estado privado relevante:
 
 ```text
 ultimo_contador_o3_enviado: Z
 ultimo_contador_temperatura_enviado: Z
 ```
 
-Operaciones principales:
+Interfaz/callbacks de ciclo de vida con efectos laterales:
 
 ```text
-onCreate() -->
-tengoPermisosBLE() --> concedidos: B
-pedirPermisosSiHacenFalta() -->
-comprobarBluetooth() -->
-botonBuscarNuestroDispositivoBTLEPulsado() -->
-botonDetenerBusquedaDispositivosBTLEPulsado() -->
-iniciarBusqueda() -->
-detenerBusqueda() -->
-resultado: ResultadoBLE --> procesarResultado() -->
-uuid: Text, id_medida: N, valor: Z, contador: N, rssi: Z --> enviarMedidaSiEsNueva() -->
+                     -------- MainActivity --------
+                     | ultimo_contador_o3_enviado: Z
+                     | ultimo_contador_temperatura_enviado: Z
+                     |
+                     | onCreate() -->
+                     |
+                     |
+                     | botonBuscarNuestroDispositivoBTLEPulsado() -->
+                     |
+                     |
+                     | botonDetenerBusquedaDispositivosBTLEPulsado() -->
+                     |
+                     |
 resultado: ResultadoPermisos --> onRequestPermissionsResult() -->
-onResume() -->
-onDestroy() -->
+                     |
+                     |
+                     | onResume() -->
+                     |
+                     |
+                     | onDestroy() -->
+                     |
+                     --------------------------------
+```
+
+Operaciones privadas y callbacks internos, expresados como firmas matemáticas:
+
+```text
+tengoPermisosBLE() --> concedidos: B
+pedirPermisosSiHacenFalta()
+comprobarBluetooth()
+iniciarBusqueda()
+detenerBusqueda()
+resultado: ResultadoBLE --> onScanResult()
+error_code: N --> onScanFailed()
+resultado: ResultadoBLE --> procesarResultado()
+uuid: Text, id_medida: N, valor: Z, contador: N, rssi: Z --> enviarMedidaSiEsNueva()
+respuesta: MedidaVista --> correcto()
+mensaje: Text --> error()
 ```
 
 Algoritmo de `procesarResultado()`:
@@ -241,16 +318,20 @@ Una única pantalla muestra estado BLE, botones **Buscar GTI Joan** y **Detener 
 
 ## Aclaraciones del Diseño
 
-- La notación oficial expresa variables en minúsculas con guion bajo (`tipo_medida_id`, `fecha_hora`); Java/JSON conserva los identificadores de implementación `tipoMedidaId`, `fechaHora`, etc. Es una correspondencia de nombres, no un cambio de tipo ni responsabilidad.
-- El package del proyecto final es `es.upv.jcatsen.pbio`; se eliminó el identificador heredado `org.jordi.prueba2025`.
-- Se conserva Java y la pila Android original para no introducir riesgo de migración durante el Sprint 0.
-- El escaneo debe probarse en un teléfono con BLE real; un AVD puede no entregar anuncios BLE.
+- La notación oficial representa variables en minúsculas (`tipo_medida_id`, `fecha_hora`); Java/JSON conserva los identificadores de implementación `tipoMedidaId`, `fechaHora`, etc. Es una correspondencia uno-a-uno, no un cambio de tipo ni responsabilidad.
+- El package final es `es.upv.jcatsen.pbio`; se eliminó el identificador heredado del proyecto de ejemplo.
+- Se conserva Java y la pila Android existente para no introducir una migración de framework innecesaria durante el Sprint 0.
+- El escaneo BLE debe probarse en un teléfono con radio BLE real; un AVD puede no entregar anuncios físicos.
 - O3 se interpreta como `N` de 16 bits; temperatura como `Z` de 16 bits.
-- Los parámetros `View`, callbacks e hilos no aparecen en el diseño lógico porque son detalles de implementación.
+- Los parámetros `View`/`Bundle`, callbacks e hilos se omiten porque son mecanismos de implementación y no datos lógicos.
+- Los arrays devueltos por `TramaIBeacon` son copias defensivas, manteniendo la encapsulación indicada por el diagrama de clase.
+
+
+- **Trazabilidad de ingeniería inversa:** `MainActivity`, `TramaIBeacon` y `Utilidades` conservan las responsabilidades del código Android proporcionado como base y están representadas explícitamente en este diseño. `MedidaEntrada`, `LogicaFake` y `PeticionarioREST` corresponden a la ampliación del Sprint 0 para conectar el cliente con el backend.
 
 ## Reglas Generales
 
 - **Lenguaje de Programación:** Java para Android.
-- **Encabezados de Funciones/Métodos:** cada método debe incluir diseño lógico entre `--------------------` y breve descripción; se omiten detalles propios del framework que no forman parte del contrato lógico.
-- **Legibilidad del Código:** `MainActivity` coordina UI/BLE; `TramaIBeacon` analiza; `Utilidades` convierte; `LogicaFake` expone el contrato remoto; `PeticionarioREST` hace HTTP.
-- **Pruebas Automatizadas:** JUnit cubre Major/Minor, decodificación signed/unsigned, análisis de una trama iBeacon completa, rechazo de bytes sin prefijo iBeacon y URL; el test instrumentado valida el package instalado. La recepción BLE por radio se valida de forma presencial con hardware real.
+- **Encabezados de Funciones/Métodos:** cada función o método de autoría propia debe incluir su diseño lógico entre dos líneas `--------------------` y una breve descripción; cuando no exista entrada o salida lógica, se omite la flecha correspondiente.
+- **Legibilidad del Código:** mantener nombres semánticos, responsabilidades separadas y evitar comentarios que solo repitan el código.
+- **Pruebas Automatizadas:** generar pruebas unitarias o de integración para operaciones clave; la recepción por radio, que depende de hardware externo, se completa mediante el test de aceptación presencial.

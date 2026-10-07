@@ -4,7 +4,7 @@
  * Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
  * Fecha: 2026-10-07
  * Autor: Joan Catala Sendra
- * Aportación: verificación automática de la URL REST utilizada por Android.
+ * Aportación: verificación automática de URLs REST utilizadas por Android.
  */
 
 package es.upv.jcatsen.pbio;
@@ -18,14 +18,13 @@ public class ServidorUnitTest {
 
     /**
      * --------------------
-     * Diseño lógico: urlDelServidorEsLaEsperada() -->
+     * Diseño lógico: urlDelServidorEsLaEsperada()
      * Descripción: prueba automáticamente el criterio indicado.
      * Criterio: Android debe apuntar al endpoint HTTPS desplegado.
      * --------------------
      */
     @Test
     public void urlDelServidorEsLaEsperada() {
-
         assertEquals(
                 "https://jcatsen.upv.edu.es/biometria/api.php",
                 LogicaFake.URL_API
@@ -34,18 +33,27 @@ public class ServidorUnitTest {
 
     /**
      * --------------------
-     * Diseño lógico: urlUsaRutaBiometria() -->
-     * Descripción: prueba automáticamente el criterio indicado.
-     * Criterio: la URL debe utilizar la ruta /biometria del dominio principal.
+     * Diseño lógico: urlHealthEsLaEsperada()
+     * Descripción: verifica el endpoint usado para diagnóstico de conectividad desde el móvil.
      * --------------------
      */
     @Test
-    public void urlUsaRutaBiometria() {
-
-        assertTrue(
-                LogicaFake.URL_API.contains(
-                        "jcatsen.upv.edu.es/biometria"
-                )
+    public void urlHealthEsLaEsperada() {
+        assertEquals(
+                "https://jcatsen.upv.edu.es/biometria/api.php?accion=health",
+                LogicaFake.URL_HEALTH
         );
+    }
+
+    /**
+     * --------------------
+     * Diseño lógico: urlsUsanHttps()
+     * Descripción: comprueba que tanto escritura como health usan transporte cifrado.
+     * --------------------
+     */
+    @Test
+    public void urlsUsanHttps() {
+        assertTrue(LogicaFake.URL_API.startsWith("https://"));
+        assertTrue(LogicaFake.URL_HEALTH.startsWith("https://"));
     }
 }

@@ -67,7 +67,7 @@ const ui = {
 
 /**
  * --------------------
- * Diseño lógico: iniciar() -->
+ * Diseño lógico: iniciar()
  * Descripción: comprueba servidor, carga catálogos, actualiza datos y programa refresco.
  * --------------------
  */
@@ -108,7 +108,7 @@ async function iniciar() {
 
 /**
  * --------------------
- * Diseño lógico: cargarCatalogos() -->
+ * Diseño lógico: cargarCatalogos()
  * Descripción: obtiene dispositivos/tipos y rellena los selectores de filtros.
  * --------------------
  */
@@ -161,7 +161,7 @@ async function cargarCatalogos() {
 
 /**
  * --------------------
- * Diseño lógico: actualizar() -->
+ * Diseño lógico: actualizar()
  * Descripción: consulta medidas filtradas y refresca todos los componentes visuales.
  * --------------------
  */
@@ -231,7 +231,7 @@ function fechaSql(valor) {
 
 /**
  * --------------------
- * Diseño lógico: medidas: [MedidaVista] --> pintarResumen() -->
+ * Diseño lógico: medidas: [MedidaVista] --> pintarResumen()
  * Descripción: muestra último O3, temperatura y RSSI.
  * --------------------
  */
@@ -268,7 +268,7 @@ function pintarResumen(medidas) {
 
 /**
  * --------------------
- * Diseño lógico: medidas: [MedidaVista] --> pintarTabla() -->
+ * Diseño lógico: medidas: [MedidaVista] --> pintarTabla()
  * Descripción: reconstruye el histórico escapando los valores antes de insertarlos.
  * --------------------
  */
@@ -320,7 +320,7 @@ function pintarTabla(medidas) {
 
 /**
  * --------------------
- * Diseño lógico: medidas: [MedidaVista] --> pintarGrafica() -->
+ * Diseño lógico: medidas: [MedidaVista] --> pintarGrafica()
  * Descripción: representa hasta 50 valores del tipo seleccionado en un canvas.
  * --------------------
  */
@@ -524,7 +524,7 @@ function escapar(valor) {
 
 /**
  * --------------------
- * Diseño lógico: mensaje: Text --> mostrarError() -->
+ * Diseño lógico: mensaje: Text --> mostrarError()
  * Descripción: registra el error y actualiza el estado visual de conexión.
  * --------------------
  */
