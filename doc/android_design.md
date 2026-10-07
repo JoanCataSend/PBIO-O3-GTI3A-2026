@@ -1,53 +1,60 @@
 # android_design.md
 
-## Component Design (Diseño del Componente)
+## Diseño del Componente
 
-**Componente:** `android`
-**Implementación canónica para revisión:** `src/android/`
-**Código operativo equivalente:** `android/`
+**Componente:** `android`  
+**Implementación:** `src/android/`  
+**Lenguaje:** Java.
 
-La aplicación Android detecta el iBeacon del nodo `GTI Joan`, valida el UUID del proyecto, decodifica `Major` y `Minor`, evita reenvíos duplicados por contador y envía cada medida aceptada a la API REST.
+El componente Android recibe iBeacon, extrae la medida, actualiza la interfaz y llama a una lógica fake que representa la interfaz remota de la lógica de negocio. La actividad no construye HTTP directamente.
 
-
-### Tipos lógicos comunes
-
-```text
-N      número natural
-Z      número entero
-R      número real
-VoF    booleano
-Texto  cadena de caracteres
-[T]    colección de T
-[T]_n  array de T de tamaño fijo n
-JSON   Texto con estructura JSON
-```
-
-Tipos del dominio:
+### Tipos lógicos
 
 ```text
+Json = Text
+
 MedidaEntrada = (
-    uuid:Texto,
-    tipoMedidaId:N,
-    valor:Z,
-    contador:N,
-    rssi:Z
+    uuid: Text,
+    tipo_medida_id: N,
+    valor: Z,
+    contador: N,
+    rssi: Z
 )
 
 MedidaVista = (
-    medidaId:N,
-    dispositivoId:N,
-    uuid:Texto,
-    dispositivo:Texto,
-    tipoMedidaId:N,
-    tipoMedida:Texto,
-    unidad:Texto,
-    valor:Z,
-    contador:N,
-    rssi:Z,
-    fechaHora:Texto
+    medida_id: N,
+    dispositivo_id: N,
+    uuid: Text,
+    dispositivo: Text,
+    tipo_medida_id: N,
+    tipo_medida: Text,
+    unidad: Text,
+    valor: Z,
+    contador: N,
+    rssi: Z,
+    fecha_hora: Text
+)
+
+ResultadoBLE = (
+    bytes: [N],
+    rssi: Z
+)
+
+ResultadoPermisos = (
+    request_code: N,
+    permisos: [Text],
+    resultados: [Z]
 )
 ```
 
+Constantes:
+
+```text
+NOMBRE_NODO = "GTI Joan"
+UUID_PROYECTO = "EPSG-GTI-PROY-3A"
+ID_TEMPERATURA = 12
+ID_O3 = 14
+```
 
 ### Arquitectura
 
@@ -62,77 +69,188 @@ MainActivity
              +--> PeticionarioREST
 ```
 
-### Contratos
+### Clase `MedidaEntrada`
 
 ```text
-bytes:[N] --> TramaIBeacon() -->
-analizar() -->
-esValida() --> valida:VoF
-getUUID() --> uuid:[N]_16
-getMajor() --> major:[N]_2
-getMinor() --> minor:[N]_2
-getTxPower() --> txPower:Z
-
-bytes:[N] --> bytesToString() --> Texto
-bytes:[N] --> bytesToHexString() --> Texto
-bytes:[N] --> bytesToUnsignedInt() --> N
-bytes:[N]_2 --> bytesToSignedInt16() --> Z
-
-MedidaEntrada(uuid:Texto, tipoMedidaId:N, valor:Z, contador:N, rssi:Z) -->
-MedidaEntrada --> toJson() --> JSON | Error
-
-datos:MedidaEntrada --> insertarMedida() --> MedidaVista | Error
-url:Texto, datos:JSON --> postJson() --> JSON | Error
+                    -------- MedidaEntrada --------
+                    | uuid: Text
+                    | tipo_medida_id: N
+                    | valor: Z
+                    | contador: N
+                    | rssi: Z
+                    |
+uuid: Text,          |
+tipo_medida_id: N, |
+valor: Z,           |
+contador: N,        |
+rssi: Z         --> MedidaEntrada() -->
+                    |
+                    |
+         json: Json <-- toJson() <--
+                    |
+                    -------------------------------
 ```
 
-### Decodificación BLE
+### Clase `TramaIBeacon`
+
+Estado privado:
 
 ```text
-si no existe cabecera iBeacon 4C 00 02 15 -> descartar
-si UUID != "EPSG-GTI-PROY-3A" -> descartar
-major <- bytesToUnsignedInt(majorBytes)
-idMedida <- (major >> 8) AND 255
-contador <- major AND 255
-si idMedida = 14 -> valor <- bytesToUnsignedInt(minorBytes)
-si no -> valor <- bytesToSignedInt16(minorBytes)
-si idMedida no es 14 ni 12 -> no enviar
-si contador ya enviado para ese tipo -> no enviar
-crear MedidaEntrada y POST a la API
-si el POST falla -> liberar contador para permitir reintento
+los_bytes: [N]
+uuid: [N]_16
+major: [N]_2
+minor: [N]_2
+tx_power: Z
+valida: B
 ```
 
-Configuración de proyecto: `compileSdk 33`, `minSdk 28`, `targetSdk 32`, Gradle 7.4 y Java/JDK 17 para ejecutar el wrapper de este proyecto.
+`analizar()` es privado y muta ese estado.
+
+```text
+                     ---------- TramaIBeacon ----------
+                     | los_bytes: [N]
+                     | uuid: [N]_16
+                     | major: [N]_2
+                     | minor: [N]_2
+                     | tx_power: Z
+                     | valida: B
+                     |
+                     | analizar() -->
+                     |
+bytes: [N]       --> TramaIBeacon() -->
+                     |
+          valida: B <-- esValida() <--
+                     |
+     uuid: [N]_16 <-- getUUID() <--
+                     |
+      major: [N]_2 <-- getMajor() <--
+                     |
+      minor: [N]_2 <-- getMinor() <--
+                     |
+        tx_power: Z <-- getTxPower() <--
+                     |
+        bytes: [N] <-- getLosBytes() <--
+                     |
+                     ---------------------------------
+```
+
+Algoritmo de `analizar()`:
+
+```text
+buscar la secuencia 4C 00 02 15
+si no existe -> valida <- false
+si existe y hay 25 bytes desde el prefijo:
+    uuid <- 16 bytes siguientes
+    major <- 2 bytes siguientes
+    minor <- 2 bytes siguientes
+    tx_power <- byte siguiente
+    valida <- true
+```
+
+### Clase estática `Utilidades`
+
+```text
+bytes: [N]   --> bytesToString() --> texto: Text      --x
+bytes: [N]   --> bytesToHexString() --> hexadecimal: Text --x
+bytes: [N]   --> bytesToUnsignedInt() --> valor: N    --x
+bytes: [N]_2 --> bytesToSignedInt16() --> valor: Z    --x
+```
+
+### `LogicaFake`
+
+```text
+datos: MedidaEntrada --> insertarMedida() --> medida: MedidaVista --x
+```
+
+Responsabilidad:
+
+```text
+MedidaEntrada -> serializar -> PeticionarioREST -> respuesta de dominio
+```
+
+### `PeticionarioREST`
+
+La asincronía y el callback son mecanismos Java; el contrato lógico elimina ese detalle:
+
+```text
+url: Text, datos: Json --> postJson() --> respuesta: Json --x
+entrada: Text --> leerTexto() --> texto: Text
+```
+
+### `MainActivity`
+
+Estado relevante:
+
+```text
+ultimo_contador_o3_enviado: Z
+ultimo_contador_temperatura_enviado: Z
+```
+
+Operaciones principales:
+
+```text
+onCreate() -->
+tengoPermisosBLE() --> concedidos: B
+pedirPermisosSiHacenFalta() -->
+comprobarBluetooth() -->
+botonBuscarNuestroDispositivoBTLEPulsado() -->
+botonDetenerBusquedaDispositivosBTLEPulsado() -->
+iniciarBusqueda() -->
+detenerBusqueda() -->
+resultado: ResultadoBLE --> procesarResultado() -->
+uuid: Text, id_medida: N, valor: Z, contador: N, rssi: Z --> enviarMedidaSiEsNueva() -->
+resultado: ResultadoPermisos --> onRequestPermissionsResult() -->
+onResume() -->
+onDestroy() -->
+```
+
+Algoritmo de `procesarResultado()`:
+
+```text
+si no hay scan record -> terminar
+trama <- TramaIBeacon(bytes)
+si trama no válida -> terminar
+uuid <- bytesToString(trama.uuid)
+si uuid != UUID_PROYECTO -> terminar
+major <- bytesToUnsignedInt(trama.major)
+id_medida <- 8 bits altos de major
+contador <- 8 bits bajos de major
+si id_medida = ID_O3:
+    valor <- bytesToUnsignedInt(trama.minor)
+si id_medida = ID_TEMPERATURA:
+    valor <- bytesToSignedInt16(trama.minor)
+en otro caso -> no enviar
+enviarMedidaSiEsNueva(uuid, id_medida, valor, contador, rssi)
+actualizar UI
+```
+
+Algoritmo de `enviarMedidaSiEsNueva()`:
+
+```text
+si id_medida no es O3 ni Temperatura -> terminar
+si contador ya enviado para ese tipo -> terminar
+recordar contador
+datos <- MedidaEntrada(...)
+insertarMedida(datos)
+si la petición falla -> liberar ese contador para permitir reintento
+```
 
 ### Descripción textual de la GUI
 
-La aplicación tiene una única pantalla principal (`activity_main.xml`) dentro de un `ScrollView`. De arriba abajo muestra: título **Nodo sensor GTI Joan**, estado de Bluetooth, botón **Buscar GTI Joan**, botón **Detener búsqueda**, valor destacado de O3 en ppb, temperatura en °C, contador, RSSI, estado del servidor y texto de `Major / Minor`. La pantalla debe permitir demostrar visualmente recepción BLE y confirmación de guardado sin navegar a otras vistas.
+Una única pantalla muestra estado BLE, botones **Buscar GTI Joan** y **Detener búsqueda**, último O3, temperatura, contador, RSSI, trama decodificada y estado del servidor.
 
-### Archivos del componente
+## Aclaraciones del Diseño
 
-```text
-app/src/main/java/org/jordi/prueba2025/MainActivity.java
-app/src/main/java/org/jordi/prueba2025/TramaIBeacon.java
-app/src/main/java/org/jordi/prueba2025/Utilidades.java
-app/src/main/java/org/jordi/prueba2025/MedidaEntrada.java
-app/src/main/java/org/jordi/prueba2025/LogicaFake.java
-app/src/main/java/org/jordi/prueba2025/PeticionarioREST.java
-app/src/main/AndroidManifest.xml
-app/src/main/res/layout/activity_main.xml
-```
+- La notación oficial expresa variables en minúsculas con guion bajo (`tipo_medida_id`, `fecha_hora`); Java/JSON conserva los identificadores de implementación `tipoMedidaId`, `fechaHora`, etc. Es una correspondencia de nombres, no un cambio de tipo ni responsabilidad.
+- El package del proyecto final es `es.upv.jcatsen.pbio`; se eliminó el identificador heredado `org.jordi.prueba2025`.
+- Se conserva Java y la pila Android original para no introducir riesgo de migración durante el Sprint 0.
+- El escaneo debe probarse en un teléfono con BLE real; un AVD puede no entregar anuncios BLE.
+- O3 se interpreta como `N` de 16 bits; temperatura como `Z` de 16 bits.
+- Los parámetros `View`, callbacks e hilos no aparecen en el diseño lógico porque son detalles de implementación.
 
-## Design Clarifications (Aclaraciones del Diseño)
+## Reglas Generales
 
-- El escaneo BLE debe probarse en teléfono físico; un AVD puede no exponer un escáner BLE real.
-- `LogicaFake` es un adaptador de cliente: separa la actividad de los detalles HTTP, aunque use el nombre histórico “Fake”.
-- URL canónica: `https://jcatsen.upv.edu.es/biometria/api.php`.
-- Los permisos contemplan Android 11 y Android 12+ y el manifest declara acceso a Internet y BLE.
-- Los callbacks son un detalle de implementación; el contrato lógico de `postJson` se expresa como entrada JSON y salida JSON/error.
-- El wrapper de Gradle y los recursos de launcher generados por Android Studio son infraestructura generada; la regla de cabeceras lógicas se aplica al código de aplicación y de tests mantenido por el proyecto.
-
-## General Rules (Reglas Generales)
-
-- **Programming Language / Lenguaje de Programación:** Java para la lógica Android y XML para manifest, layouts, recursos y temas.
-- **Function/Method Headers / Encabezados de Funciones/Métodos:** cada función, método y callback relevante incluye un bloque de comentario con diseño lógico, delimitado por `--------------------`.
-- **Code Readability / Legibilidad del Código:** la actividad coordina UI/escaneo; parsing, utilidades, serialización y HTTP se separan en clases específicas.
-- **Automated Testing / Pruebas Automatizadas:** `src/android/app/src/test/.../ProtocolUnitTest.java` valida Major, O3 y temperatura; `ServidorUnitTest.java` valida la URL; `AppInstrumentedTest.java` valida el paquete en dispositivo/emulador. El proyecto se ejecuta con `gradlew.bat test` usando JDK 17.
-- **Source correspondence / Correspondencia:** `src/android/` reproduce el proyecto Android operativo completo para que diseño e implementación puedan compararse directamente.
+- **Lenguaje de Programación:** Java para Android.
+- **Encabezados de Funciones/Métodos:** cada método debe incluir diseño lógico entre `--------------------` y breve descripción; se omiten detalles propios del framework que no forman parte del contrato lógico.
+- **Legibilidad del Código:** `MainActivity` coordina UI/BLE; `TramaIBeacon` analiza; `Utilidades` convierte; `LogicaFake` expone el contrato remoto; `PeticionarioREST` hace HTTP.
+- **Pruebas Automatizadas:** JUnit cubre Major/Minor y URL; el test instrumentado valida el package instalado. La recepción BLE se valida de forma presencial con hardware real.

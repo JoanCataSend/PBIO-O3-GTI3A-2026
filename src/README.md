@@ -1,6 +1,16 @@
-# Source components for automated review
+# Código fuente
 
-`src/` is intentionally organized one-to-one with `doc/*_design.md`, as required by the Sprint Reviewer Agent.
-It mirrors the same source files used by the runnable project; the native build/deployment folders remain at repository root so Arduino, Gradle and Plesk continue to work without path rewrites.
+`src/` es la **única fuente de verdad** de la implementación del Sprint 0. No existe una segunda copia «operativa» del código en la raíz.
 
-Do not treat `src/` as a second implementation: it is the reviewer-normalized view of the same Sprint 0 code.
+Cada subcarpeta corresponde uno-a-uno con un diseño `doc/xxx_design.md`, tal como exige el agente de revisión:
+
+| Diseño | Implementación |
+|---|---|
+| `doc/firmware_design.md` | `src/firmware/` |
+| `doc/android_design.md` | `src/android/` |
+| `doc/database_design.md` | `src/database/` |
+| `doc/business_logic_design.md` | `src/business_logic/` |
+| `doc/api_rest_design.md` | `src/api_rest/` |
+| `doc/web_design.md` | `src/web/` |
+
+Los tests de cada componente están junto a su implementación cuando procede.

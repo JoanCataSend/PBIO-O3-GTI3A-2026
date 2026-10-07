@@ -1,53 +1,61 @@
 # web_design.md
 
-## Component Design (Diseño del Componente)
+## Diseño del Componente
 
-**Componente:** `web`
-**Implementación canónica para revisión:** `src/web/`
-**Código operativo equivalente:** `web/index.html`, `web/css/` y `web/js/`
+**Componente:** `web`  
+**Implementación:** `src/web/`  
+**Lenguajes:** HTML5, CSS3 y JavaScript.
 
-La interfaz web consulta la API, presenta estado de conexión, filtros, últimos valores, histórico y una gráfica. La UI no accede directamente a MariaDB.
+La interfaz web separa presentación de acceso remoto. `app.js` controla DOM/UX y `LogicaFake.js` es la única capa que conoce `fetch` y las rutas REST.
 
-
-### Tipos lógicos comunes
-
-```text
-N      número natural
-Z      número entero
-R      número real
-VoF    booleano
-Texto  cadena de caracteres
-[T]    colección de T
-[T]_n  array de T de tamaño fijo n
-JSON   Texto con estructura JSON
-```
-
-Tipos del dominio:
+### Tipos lógicos
 
 ```text
-MedidaEntrada = (
-    uuid:Texto,
-    tipoMedidaId:N,
-    valor:Z,
-    contador:N,
-    rssi:Z
+Json = Text
+
+PeticionHTTP = (
+    metodo: Text,
+    cabeceras: Text,
+    cuerpo: Json
+)
+
+Dispositivo = (
+    dispositivo_id: N,
+    uuid: Text,
+    nombre: Text
+)
+
+TipoMedida = (
+    tipo_medida_id: N,
+    nombre: Text,
+    unidad: Text
 )
 
 MedidaVista = (
-    medidaId:N,
-    dispositivoId:N,
-    uuid:Texto,
-    dispositivo:Texto,
-    tipoMedidaId:N,
-    tipoMedida:Texto,
-    unidad:Texto,
-    valor:Z,
-    contador:N,
-    rssi:Z,
-    fechaHora:Texto
+    medida_id: N,
+    dispositivo_id: N,
+    uuid: Text,
+    dispositivo: Text,
+    tipo_medida_id: N,
+    tipo_medida: Text,
+    unidad: Text,
+    valor: Z,
+    contador: N,
+    rssi: Z,
+    fecha_hora: Text
 )
-```
 
+FiltrosMedida = (
+    dispositivo_id: N,
+    tipo_medida_id: N,
+    desde: Text,
+    hasta: Text
+)
+
+Los cuatro campos son filtros de dominio. En la petición web pueden omitirse; cuando están presentes, identificadores son `N` y fechas son `Text`.
+
+EstadoBD = (ok: B, database: Text)
+```
 
 ### Arquitectura
 
@@ -64,83 +72,85 @@ index.html + styles.css
      api.php
 ```
 
-### Contratos de acceso a datos
+### `LogicaFake.js`
 
 ```text
-url:Texto, opciones:PeticionHTTP --> pedir() --> JSON | Error
-filtros:FiltrosMedida --> listarMedidas() --> [MedidaVista] | Error
-listarDispositivos() --> [Dispositivo] | Error
-listarTiposMedida() --> [TipoMedida] | Error
-health() --> EstadoBD | Error
+url: Text, opciones: PeticionHTTP --> pedir() --> datos: Json
+filtros: FiltrosMedida --> listarMedidas() --> medidas: [MedidaVista]
+listarDispositivos() --> dispositivos: [Dispositivo]
+listarTiposMedida() --> tipos: [TipoMedida]
+health() --> estado: EstadoBD
 ```
 
-### Contratos de UI
+`api.php` es una ruta relativa; no se codifica un host en el navegador.
+
+### `app.js`
 
 ```text
 iniciar() -->
 cargarCatalogos() -->
 actualizar() -->
-valor:Texto --> fechaSql() --> Texto
-medidas:[MedidaVista] --> pintarResumen() -->
-medidas:[MedidaVista] --> pintarTabla() -->
-medidas:[MedidaVista] --> pintarGrafica() -->
-valor:Texto --> escapar() --> Texto
-error:Error --> mostrarError() -->
+valor: Text --> fechaSql() --> fecha: Text
+medidas: [MedidaVista] --> pintarResumen() -->
+medidas: [MedidaVista] --> pintarTabla() -->
+medidas: [MedidaVista] --> pintarGrafica() -->
+valor: Text --> escapar() --> texto_seguro: Text
+mensaje: Text --> mostrarError() -->
 ```
 
-### Flujo principal
+### Flujo de inicio
 
 ```text
-iniciar:
-    registrar botón Actualizar
-    health()
-    cargarCatalogos()
-    actualizar()
-    programar actualizar() cada 5 s
+registrar eventos
+health()
+si falla -> mostrarError() y terminar
+cargarCatalogos()
+actualizar()
+programar actualizar() cada 5 s
+```
 
-actualizar:
-    leer filtros UI
-    listarMedidas(filtros)
-    pintarResumen
-    pintarTabla
-    pintarGrafica
-    actualizar hora/estado de conexión
+### Flujo de actualización
+
+```text
+leer filtros de la UI
+convertir fechas al formato esperado
+listarMedidas(filtros)
+pintarResumen(medidas)
+pintarTabla(medidas)
+pintarGrafica(medidas)
+actualizar estado y hora de refresco
 ```
 
 ### Descripción textual de la GUI
 
-La web es una única pantalla responsive. La cabecera muestra **Monitor ambiental · GTI Joan** y un estado de conexión accesible. A la izquierda/en la parte superior en móvil se sitúan filtros por dispositivo, tipo, fecha desde y fecha hasta, junto con el botón **Actualizar**. El área principal contiene tres tarjetas de resumen (O3, Temperatura y último RSSI), una gráfica temporal en `canvas` y una tabla histórica con fecha/hora, dispositivo, tipo, valor y RSSI. Si el filtro no devuelve filas se presenta un mensaje de “sin datos”.
+- Cabecera con nombre del monitor y estado de conexión.
+- Panel de filtros por dispositivo, tipo y rango temporal.
+- Tarjetas de última medida de O3, temperatura y RSSI.
+- Gráfica temporal del tipo seleccionado.
+- Tabla histórica con fecha, dispositivo, tipo, valor/unidad y RSSI.
+- Botón de actualización manual más refresco automático cada 5 segundos.
 
-### Archivos del componente
+### UX, accesibilidad y seguridad
 
-```text
-index.html
-css/styles.css
-js/LogicaFake.js
-js/app.js
-```
+- Diseño responsive para móvil y escritorio.
+- Controles táctiles de al menos 44 px e inputs de 16 px en móvil.
+- `safe-area` para dispositivos con notch.
+- Estado de conexión con `role="status"` y `aria-live`.
+- Tabla con scroll horizontal en pantallas estrechas.
+- Valores escapados antes de insertarlos mediante `innerHTML`.
+- Sin frameworks ni dependencias externas.
 
-### UX y seguridad
+## Aclaraciones del Diseño
 
-- Diseño responsive para móvil.
-- Controles táctiles de al menos 44 px y `safe-area` para notch.
-- Tabla con desplazamiento horizontal.
-- Estado de conexión visible mediante `role="status"`/`aria-live`.
-- O3 y temperatura priorizados en el resumen.
-- Datos del histórico escapados mediante `escapar()` antes de insertarse como HTML.
-- Canvas ajustado al tamaño CSS real y `devicePixelRatio`.
+- La notación lógica usa variables en minúsculas con guion bajo; los objetos JSON recibidos conservan las claves del API (`tipoMedidaId`, `fechaHora`, etc.). La equivalencia está definida uno-a-uno.
+- La lógica fake del navegador es `LogicaFake.js`; no contiene decisiones de presentación.
+- `app.js` no conoce SQL ni credenciales y no realiza `fetch` directamente.
+- Si no se selecciona un tipo, la gráfica prioriza O3; las tarjetas muestran la medida más reciente disponible de cada tipo en el conjunto filtrado.
+- Las evidencias visuales sirven como apoyo, pero no sustituyen el test presencial extremo a extremo.
 
-## Design Clarifications (Aclaraciones del Diseño)
+## Reglas Generales
 
-- `LogicaFake.js` encapsula `fetch`; el nombre se conserva por continuidad con la asignatura, pero consulta la API real.
-- El navegador usa `api.php` como ruta relativa para que el mismo frontend funcione en el despliegue `/biometria/`.
-- Si hay menos de dos puntos de un tipo, la gráfica muestra un mensaje en lugar de dibujar una serie engañosa.
-- Las fechas `datetime-local` se transforman al formato SQL esperado por la API.
-
-## General Rules (Reglas Generales)
-
-- **Programming Language / Lenguaje de Programación:** JavaScript ES2020+, HTML5 y CSS3 sin frameworks externos.
-- **Function/Method Headers / Encabezados de Funciones/Métodos:** cada función JavaScript incluye diseño lógico dentro de un bloque delimitado por `--------------------`.
-- **Code Readability / Legibilidad del Código:** `LogicaFake.js` concentra acceso REST; `app.js` concentra UI; HTML y CSS permanecen declarativos y separados.
-- **Automated Testing / Pruebas Automatizadas:** `src/web/tests/web_unit_test.js` carga el `app.js` real en un contexto aislado y prueba `fechaSql()` y `escapar()`; la API utilizada por la web se cubre además mediante el test de integración REST.
-- **Source correspondence / Correspondencia:** `src/web/` contiene los mismos HTML/CSS/JS que el frontend operativo, sin incluir `api.php` porque este pertenece al componente `api_rest`.
+- **Lenguaje de Programación:** JavaScript sin frameworks, HTML5 y CSS3.
+- **Encabezados de Funciones/Métodos:** cada función JavaScript debe incluir su diseño lógico entre `--------------------` y breve descripción.
+- **Legibilidad del Código:** separar acceso REST, control de UI y presentación; mantener nombres semánticos y no duplicar rutas.
+- **Pruebas Automatizadas:** `src/web/tests/web_unit_test.js` verifica conversión temporal, escape HTML y que la lógica fake use API relativa.

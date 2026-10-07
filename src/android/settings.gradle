@@ -1,8 +1,8 @@
 // Archivo: settings.gradle
 // Descripción: declaración de módulos y repositorios Gradle.
-// Copyright: 2026 Joan (uso académico PBIO - UPV)
-// Fecha: 2026-10-01
-// Autor: Joan
+// Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
+// Fecha: 2026-10-07
+// Autor: Joan Catala Sendra
 // Aportación: configuración de módulos del proyecto Android.
 
 pluginManagement {
@@ -19,5 +19,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "Prueba2025"
+rootProject.name = "PBIO-Sprint0-JoanCatala"
 include ':app'

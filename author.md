@@ -1,3 +1,3 @@
-# Author
+# Autor
 
-Joan Català Sendra
+Joan Catala Sendra

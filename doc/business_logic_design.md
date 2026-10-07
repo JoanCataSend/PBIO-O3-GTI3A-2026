@@ -1,113 +1,141 @@
 # business_logic_design.md
 
-## Component Design (Diseño del Componente)
+## Diseño del Componente
 
-**Componente:** `business_logic`
-**Implementación canónica para revisión:** `src/business_logic/`
-**Código operativo equivalente:** `server/Logica.php`
+**Componente:** `business_logic`  
+**Implementación:** `src/business_logic/`  
+**Lenguaje:** PHP 8.
 
-La lógica de negocio valida entradas, resuelve entidades de catálogo, inserta medidas y proporciona consultas normalizadas. No decide códigos HTTP ni genera HTML.
+La lógica de negocio es la única capa que valida datos de dominio y accede a MariaDB. No conoce códigos HTTP, HTML ni elementos de interfaz.
 
-
-### Tipos lógicos comunes
-
-```text
-N      número natural
-Z      número entero
-R      número real
-VoF    booleano
-Texto  cadena de caracteres
-[T]    colección de T
-[T]_n  array de T de tamaño fijo n
-JSON   Texto con estructura JSON
-```
-
-Tipos del dominio:
+### Tipos lógicos
 
 ```text
 MedidaEntrada = (
-    uuid:Texto,
-    tipoMedidaId:N,
-    valor:Z,
-    contador:N,
-    rssi:Z
+    uuid: Text,
+    tipo_medida_id: N,
+    valor: Z,
+    contador: N,
+    rssi: Z
+)
+
+Dispositivo = (
+    dispositivo_id: N,
+    uuid: Text,
+    nombre: Text
+)
+
+TipoMedida = (
+    tipo_medida_id: N,
+    nombre: Text,
+    unidad: Text
 )
 
 MedidaVista = (
-    medidaId:N,
-    dispositivoId:N,
-    uuid:Texto,
-    dispositivo:Texto,
-    tipoMedidaId:N,
-    tipoMedida:Texto,
-    unidad:Texto,
-    valor:Z,
-    contador:N,
-    rssi:Z,
-    fechaHora:Texto
+    medida_id: N,
+    dispositivo_id: N,
+    uuid: Text,
+    dispositivo: Text,
+    tipo_medida_id: N,
+    tipo_medida: Text,
+    unidad: Text,
+    valor: Z,
+    contador: N,
+    rssi: Z,
+    fecha_hora: Text
+)
+
+FiltrosMedida = (
+    dispositivo_id: N,
+    tipo_medida_id: N,
+    desde: Text,
+    hasta: Text
+)
+
+Los campos de `FiltrosMedida` son opcionales a nivel de llamada; si están presentes, deben respetar los tipos indicados. La ausencia de un campo significa que ese criterio no se aplica.
+
+EstadoBD = (
+    ok: B,
+    database: Text
+)
+
+ConexionBD = (
+    activa: B
+)
+
+MedidaVistaBD = (
+    medida_id: Text,
+    dispositivo_id: Text,
+    uuid: Text,
+    dispositivo: Text,
+    tipo_medida_id: Text,
+    tipo_medida: Text,
+    unidad: Text,
+    valor: Text,
+    contador: Text,
+    rssi: Text,
+    fecha_hora: Text
 )
 ```
 
+`ConexionBD` representa de forma abstracta el recurso de persistencia; el diseño no expresa punteros, handles ni detalles de `mysqli`.
 
-### Operaciones públicas
+### Operaciones
 
 ```text
-conexionBD() --> ConexionBD | Error
-probarConexion() --> EstadoBD | Error
-datos:MedidaEntrada --> insertarMedida() --> MedidaVista | Error
-medidaId:N --> buscarMedidaConId() --> MedidaVista | Error
-filtros:FiltrosMedida --> listarMedidas() --> [MedidaVista] | Error
-listarDispositivos() --> [Dispositivo] | Error
-listarTiposMedida() --> [TipoMedida] | Error
-dispositivoId:N, tipoMedidaId:N --> buscarUltimaMedida() --> MedidaVista | Error
-datos:MedidaEntrada --> validarMedidaEntrada() --> | Error
-consultaMedidaVista() --> consulta:Texto
-fila:MedidaVistaBD --> normalizarMedidaVista() --> MedidaVista
+conexionBD() --> conexion: ConexionBD
+probarConexion() --> estado: EstadoBD
+datos: MedidaEntrada --> insertarMedida() --> medida: MedidaVista
+medida_id: N --> buscarMedidaConId() --> medida: MedidaVista
+filtros: FiltrosMedida --> listarMedidas() --> medidas: [MedidaVista]
+listarDispositivos() --> dispositivos: [Dispositivo]
+listarTiposMedida() --> tipos: [TipoMedida]
+dispositivo_id: N, tipo_medida_id: N --> buscarUltimaMedida() --> medida: MedidaVista
+datos: MedidaEntrada --> validarMedidaEntrada() -->
+consultaMedidaVista() --> consulta: Text
+fila: MedidaVistaBD --> normalizarMedidaVista() --> medida: MedidaVista
 ```
 
-### Validación de `MedidaEntrada`
+### Validación de entrada
 
 ```text
-uuid existe y no es vacío
-tipoMedidaId es entero natural válido
-valor es entero
+uuid existe y tiene 16 caracteres
+tipo_medida_id es entero y cabe en 8 bits
+valor es entero y cabe en los 16 bits transportados por Minor
 contador es entero y 0 <= contador <= 255
 rssi es entero
 ```
 
+La existencia real del dispositivo y del tipo se comprueba contra los catálogos de la BBDD antes de insertar.
+
 ### Inserción
 
 ```text
-validar entrada
-buscar dispositivo por uuid
+validarMedidaEntrada(datos)
+resolver Dispositivo por uuid
 si no existe -> Error
-buscar tipo por tipoMedidaId
+resolver TipoMedida por tipo_medida_id
 si no existe -> Error
-INSERT Medida(dispositivoId, tipoMedidaId, valor, contador, rssi)
-recuperar la fila mediante consultaMedidaVista()
-normalizar campos numéricos a enteros
-devolver MedidaVista
+insertar Medida
+recuperar la fila creada con buscarMedidaConId()
+devolver MedidaVista normalizada
 ```
 
-### Separación de capas
+### Consulta
 
-```text
-API REST --> business_logic --> MariaDB
-```
+`consultaMedidaVista()` centraliza el `JOIN` entre `Medida`, `Dispositivo` y `TipoMedida` para que todas las lecturas produzcan el mismo contrato.
 
-La capa lógica lanza excepciones de dominio/validación; la capa HTTP decide cómo traducirlas a 400/404/500.
+## Aclaraciones del Diseño
 
-## Design Clarifications (Aclaraciones del Diseño)
+- Los nombres lógicos siguen la convención oficial (`tipo_medida_id`, `fecha_hora`); el contrato JSON/SQL existente usa `tipoMedidaId`, `fechaHora`, etc. La implementación mantiene una correspondencia uno-a-uno.
+- Las excepciones de validación y de dominio se producen aquí; es responsabilidad del adaptador REST traducirlas a HTTP.
+- `SDBaseDatos.php` contiene secretos locales y **no se versiona**. Solo se entrega `SDBaseDatos.example.php`.
+- Los identificadores devueltos por `mysqli` se normalizan explícitamente a enteros para respetar `N/Z` del diseño.
+- Los filtros opcionales se validan antes de formar la consulta y los valores se enlazan mediante sentencias preparadas.
 
-- `SDBaseDatos.php` es configuración local privada y no forma parte del repositorio; se entrega `SDBaseDatos.example.php` sin credenciales reales.
-- La lógica devuelve estructuras PHP equivalentes a las tuplas lógicas documentadas.
-- `consultaMedidaVista()` centraliza los `JOIN` entre `Medida`, `Dispositivo` y `TipoMedida` para evitar duplicación.
-- Los filtros de fecha y catálogo son opcionales y se añaden mediante consultas preparadas.
+## Reglas Generales
 
-## General Rules (Reglas Generales)
-
-- **Programming Language / Lenguaje de Programación:** PHP 8 con `declare(strict_types=1)` y extensión `mysqli`.
-- **Function/Method Headers / Encabezados de Funciones/Métodos:** todas las funciones incluyen el diseño lógico en un bloque delimitado por `--------------------`.
-- **Code Readability / Legibilidad del Código:** validación, persistencia, consulta y normalización se mantienen en funciones separadas y con nombres explícitos.
-- **Automated Testing / Pruebas Automatizadas:** `src/business_logic/tests/LogicaUnitTest.php` cubre entradas válidas/erróneas, límites del contador, normalización y contrato de la consulta de vista.
-- **Source correspondence / Correspondencia:** `src/business_logic/Logica.php` coincide con la lógica operativa de `server/Logica.php`.
+- **Lenguaje de Programación:** PHP 8 con `declare(strict_types=1)` y `mysqli`.
+- **Encabezados de Funciones/Métodos:** cada función debe incluir su firma lógica entre `--------------------` y una breve descripción.
+- **Legibilidad del Código:** validación, persistencia, consulta y normalización deben permanecer separadas; no introducir HTTP en esta capa.
+- **Pruebas Automatizadas:** `src/business_logic/tests/LogicaUnitTest.php` cubre entrada válida, campos ausentes, UUID, límites de contador/valor, normalización y contrato de la consulta.

@@ -1,8 +1,8 @@
 // Archivo: build.gradle
 // Descripción: configuración del módulo Android.
-// Copyright: 2026 Joan (uso académico PBIO - UPV)
-// Fecha: 2026-10-01
-// Autor: Joan
+// Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
+// Fecha: 2026-10-07
+// Autor: Joan Catala Sendra
 // Aportación: configuración reproducible de compilación Android.
 
 plugins {
@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace 'org.jordi.prueba2025'
+    namespace 'es.upv.jcatsen.pbio'
     compileSdk 33
 
     defaultConfig {
-        applicationId "org.jordi.prueba2025"
+        applicationId "es.upv.jcatsen.pbio"
         minSdk 28
         targetSdk 32
         versionCode 1

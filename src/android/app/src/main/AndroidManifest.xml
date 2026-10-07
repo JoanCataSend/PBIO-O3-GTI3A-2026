@@ -2,9 +2,9 @@
 <!--
  Archivo: AndroidManifest.xml
  Descripción: permisos, feature BLE y actividad principal de la app PBIO.
- Copyright: 2026 Joan (uso académico PBIO - UPV)
- Fecha: 2026-10-01
- Autor: Joan
+ Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
+ Fecha: 2026-10-07
+ Autor: Joan Catala Sendra
  Aportación: declaración de permisos y requisitos BLE/Internet.
 -->
 <manifest
@@ -44,7 +44,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Prueba2025"
+        android:theme="@style/Theme.PBIO"
         tools:targetApi="31">
 
         <activity

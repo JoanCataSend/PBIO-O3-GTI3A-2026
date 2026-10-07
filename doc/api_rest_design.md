@@ -1,111 +1,107 @@
 # api_rest_design.md
 
-## Component Design (Diseño del Componente)
+## Diseño del Componente
 
-**Componente:** `api_rest`
-**Implementación canónica para revisión:** `src/api_rest/`
-**Código operativo equivalente:** `web/api.php`
+**Componente:** `api_rest`  
+**Implementación:** `src/api_rest/`  
+**Lenguaje:** PHP 8.
 
-La API REST es un adaptador HTTP/JSON. Lee método, query string o body, invoca operaciones de `business_logic` y traduce resultados/excepciones a códigos HTTP. No contiene SQL.
+Este componente es un adaptador. Interpreta HTTP/JSON, llama a funciones ya diseñadas en `business_logic` y traduce resultados/excepciones a códigos HTTP. No contiene reglas de negocio ni SQL.
 
-
-### Tipos lógicos comunes
-
-```text
-N      número natural
-Z      número entero
-R      número real
-VoF    booleano
-Texto  cadena de caracteres
-[T]    colección de T
-[T]_n  array de T de tamaño fijo n
-JSON   Texto con estructura JSON
-```
-
-Tipos del dominio:
+### Tipos lógicos
 
 ```text
-MedidaEntrada = (
-    uuid:Texto,
-    tipoMedidaId:N,
-    valor:Z,
-    contador:N,
-    rssi:Z
+Json = Text
+
+PeticionHTTP = (
+    metodo: Text,
+    accion: Text,
+    parametros: Json,
+    cuerpo: Json
 )
 
-MedidaVista = (
-    medidaId:N,
-    dispositivoId:N,
-    uuid:Texto,
-    dispositivo:Texto,
-    tipoMedidaId:N,
-    tipoMedida:Texto,
-    unidad:Texto,
-    valor:Z,
-    contador:N,
-    rssi:Z,
-    fechaHora:Texto
+RespuestaHTTP = (
+    codigo: N,
+    cuerpo: Json
 )
 ```
 
-
-### Endpoint
-
-```text
-https://jcatsen.upv.edu.es/biometria/api.php
-```
-
-### Mensajes cliente -> servidor
+### Rutas
 
 ```text
-POST /biometria/api.php
-<MedidaEntrada JSON>
-    --> 201 <MedidaVista JSON>
+POST api.php
+    cuerpo: MedidaEntrada
+    -> insertarMedida()
+    -> 201 MedidaVista
 
-GET /biometria/api.php?[dispositivoId][tipoMedidaId][desde][hasta]
-    --> 200 <[MedidaVista]>
+GET api.php?accion=medidas
+    filtros opcionales
+    -> listarMedidas()
+    -> 200 [MedidaVista]
 
-GET /biometria/api.php?accion=ultima&dispositivoId=N&tipoMedidaId=N
-    --> 200 <MedidaVista>
+GET api.php?accion=ultima&dispositivoId=<N>&tipoMedidaId=<N>
+    -> buscarUltimaMedida()
+    -> 200 MedidaVista
 
-GET /biometria/api.php?accion=dispositivos
-    --> 200 <[Dispositivo]>
+GET api.php?accion=dispositivos
+    -> listarDispositivos()
+    -> 200 [Dispositivo]
 
-GET /biometria/api.php?accion=tipos
-    --> 200 <[TipoMedida]>
+GET api.php?accion=tipos
+    -> listarTiposMedida()
+    -> 200 [TipoMedida]
 
-GET /biometria/api.php?accion=health
-    --> 200 <EstadoBD>
+GET api.php?accion=health
+    -> probarConexion()
+    -> 200 EstadoBD
 ```
 
-### Errores
+### Operación propia del adaptador
+
+```text
+codigo: N, datos: Json --> responder() -->
+```
+
+### Algoritmo de despacho
+
+```text
+si metodo = POST:
+    decodificar cuerpo JSON
+    insertarMedida(datos)
+    responder(201, medida)
+
+si metodo != GET:
+    responder(405, error)
+
+según accion:
+    health        -> probarConexion()
+    dispositivos  -> listarDispositivos()
+    tipos          -> listarTiposMedida()
+    ultima         -> buscarUltimaMedida()
+    medidas        -> listarMedidas()
+    otra           -> Error de entrada
+```
+
+### Traducción de errores
 
 ```text
 InvalidArgumentException -> 400
-DomainException -> 404
-método distinto de GET/POST -> 405
-Throwable no previsto -> 500 con mensaje genérico
+DomainException          -> 404
+método no soportado      -> 405
+Throwable no previsto    -> 500 con mensaje genérico
 ```
 
-### Función propia del adaptador
+## Aclaraciones del Diseño
 
-```text
-codigo:N, datos:JSON --> responder() -->
-```
+- Los parámetros HTTP usan `dispositivoId` y `tipoMedidaId`; en el diseño lógico se representan como `dispositivo_id` y `tipo_medida_id` para respetar la convención de variables de la notación oficial.
+- La API no abre MariaDB directamente: siempre pasa por `business_logic`.
+- La respuesta `500` no expone mensajes internos ni credenciales.
+- En el repositorio `Logica.php` está en `src/business_logic/`; en Plesk se despliega como `server/Logica.php`. `api.php` admite ambos emplazamientos sin duplicar código.
+- La web usa `api.php` relativo y Android usa HTTPS absoluto.
 
-`responder()` fija el código HTTP, serializa JSON UTF-8 y finaliza la petición. El resto del archivo es enrutamiento de nivel superior y delega la lógica a `Logica.php`.
+## Reglas Generales
 
-## Design Clarifications (Aclaraciones del Diseño)
-
-- El API soporta dos ubicaciones de despliegue para `Logica.php`: `server/` dentro de `/biometria` en Plesk y `../server/` en el árbol del repositorio.
-- Las credenciales de base de datos nunca aparecen en `api.php` ni en el repositorio.
-- El `POST` exige un objeto JSON; cuerpos inválidos se rechazan como error de entrada.
-- La API devuelve un mensaje genérico en errores 500 para no exponer detalles internos.
-
-## General Rules (Reglas Generales)
-
-- **Programming Language / Lenguaje de Programación:** PHP 8 para HTTP/JSON.
-- **Function/Method Headers / Encabezados de Funciones/Métodos:** toda función declarada incluye diseño lógico dentro de un bloque delimitado por `--------------------`.
-- **Code Readability / Legibilidad del Código:** el enrutamiento se expresa por casos simples y delega la lógica de negocio; no se duplica SQL ni validación de dominio.
-- **Automated Testing / Pruebas Automatizadas:** `src/api_rest/tests/ApiIntegracionTest.php` ejecuta comprobaciones HTTPS de `health`, base de datos declarada, dispositivo, tipos O3/temperatura y colección de medidas.
-- **Source correspondence / Correspondencia:** `src/api_rest/api.php` coincide con el endpoint operativo `web/api.php`.
+- **Lenguaje de Programación:** PHP 8.
+- **Encabezados de Funciones/Métodos:** toda función propia debe incluir diseño lógico entre `--------------------` y breve descripción.
+- **Legibilidad del Código:** el adaptador debe limitarse a parseo, despacho y códigos HTTP; cualquier regla de dominio pertenece a `business_logic`.
+- **Pruebas Automatizadas:** `src/api_rest/tests/ApiIntegracionTest.php` realiza pruebas de solo lectura sobre la API desplegada y admite `PBIO_API_URL` para cambiar el servidor de prueba.

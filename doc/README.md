@@ -1,17 +1,16 @@
-# Design specifications for the Sprint Reviewer Agent
+# Documentación de diseño
 
-This directory is the **canonical review interface** required by `AGENTS.md`.
-Every `xxx_design.md` file has a matching `src/xxx/` directory:
+Esta carpeta contiene las especificaciones que el agente de revisión debe comparar con `src/`.
 
-| Design | Matching implementation |
+| Diseño | Implementación |
 |---|---|
 | `firmware_design.md` | `src/firmware/` |
 | `android_design.md` | `src/android/` |
-| `business_logic_design.md` | `src/business_logic/` |
 | `database_design.md` | `src/database/` |
+| `business_logic_design.md` | `src/business_logic/` |
 | `api_rest_design.md` | `src/api_rest/` |
 | `web_design.md` | `src/web/` |
 
-Each specification deliberately contains the three sections required by the reviewer:
-`Component Design`, `Design Clarifications`, and `General Rules`.
-The original runnable project layout is kept in the repository because Arduino, Android/Gradle and the Plesk deployment use their native folder structures; `src/` is a synchronized reviewer-facing mirror, not an alternative implementation.
+Todos los `xxx_design.md` incluyen las secciones exigidas por `AGENTES_es.pdf`: **Diseño del Componente**, **Aclaraciones del Diseño** y **Reglas Generales**. La notación empleada es la de `Logical Design & Reverse Engineering Specification v3`: `N`, `Z`, `R`, `B`, `Text`, agregaciones, listas y firmas lógicas independientes del lenguaje.
+
+`prompts/` contiene exactamente las seis especificaciones solicitadas en la segunda tarea. `evidencias/` conserva capturas de una ejecución previa, `acceptance_test.md` describe la demostración presencial reproducible y `ai_traceability.md` documenta la relación diseño → prompt → implementación → revisión.

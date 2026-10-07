@@ -1,14 +1,14 @@
 <!--
  Archivo: themes.xml
  Descripción: tema visual principal Android.
- Copyright: 2026 Joan (uso académico PBIO - UPV)
- Fecha: 2026-10-01
- Autor: Joan
+ Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
+ Fecha: 2026-10-07
+ Autor: Joan Catala Sendra
  Aportación: configuración del tema Android.
 -->
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.Prueba2025" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="Theme.PBIO" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryDark">@color/purple_700</item>

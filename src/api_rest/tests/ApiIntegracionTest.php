@@ -1,31 +1,28 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Archivo: ApiIntegracionTest.php
- * Descripción: test automático de integración HTTPS contra la API desplegada.
- * Copyright: 2026 Joan (uso académico PBIO - UPV)
- * Fecha: 2026-10-01
- * Autor: Joan
- * Aportación: prueba de la cadena HTTPS -> API -> lógica -> MariaDB.
+ * Descripción: prueba automática de integración HTTPS contra la API desplegada.
+ * Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
+ * Fecha: 2026-10-07
+ * Autor: Joan Catala Sendra
+ * Aportación: comprobación de la cadena HTTPS -> REST -> lógica -> MariaDB.
  */
 
-const API_URL =
-    'https://jcatsen.upv.edu.es/biometria/api.php';
+declare(strict_types=1);
 
+$apiUrl = getenv('PBIO_API_URL') ?: 'https://jcatsen.upv.edu.es/biometria/api.php';
 $testsEjecutados = 0;
 $testsCorrectos = 0;
 
 /*
  * --------------------
- * Diseño lógico: condicion:VoF, nombre:Texto --> comprobar() --> | Error.
+ * Diseño lógico: condicion: B, nombre: Text --> comprobar() -->
+ * Descripción: registra un criterio cumplido o termina al primer fallo.
  * --------------------
  */
-function comprobar(
-    bool $condicion,
-    string $nombre
-): void {
+function comprobar(bool $condicion, string $nombre): void
+{
     global $testsEjecutados, $testsCorrectos;
 
     $testsEjecutados++;
@@ -41,8 +38,8 @@ function comprobar(
 
 /*
  * --------------------
- * Diseño lógico: url:Texto --> getJson() --> JSON | Error
- * Descripción: realiza GET HTTPS y decodifica una respuesta JSON.
+ * Diseño lógico: url: Text --> getJson() --> datos: Json
+ * Descripción: realiza una petición GET HTTPS y decodifica un objeto/colección JSON.
  * --------------------
  */
 function getJson(string $url): array
@@ -55,137 +52,61 @@ function getJson(string $url): array
         ]
     ]);
 
-    $respuesta = @file_get_contents(
-        $url,
-        false,
-        $contexto
-    );
+    $respuesta = @file_get_contents($url, false, $contexto);
 
     if ($respuesta === false) {
-        throw new RuntimeException(
-            'No se pudo acceder a ' . $url
-        );
+        throw new RuntimeException('No se pudo acceder a ' . $url);
     }
 
-    $datos = json_decode(
-        $respuesta,
-        true,
-        512,
-        JSON_THROW_ON_ERROR
-    );
+    $datos = json_decode($respuesta, true, 512, JSON_THROW_ON_ERROR);
 
     if (!is_array($datos)) {
-        throw new RuntimeException(
-            'La respuesta no contiene JSON valido'
-        );
+        throw new RuntimeException('La respuesta no contiene JSON válido');
     }
 
     return $datos;
 }
 
-
-/*
- * 1. Health:
- *    API -> lógica -> MariaDB.
- */
-$health = getJson(
-    API_URL . '?accion=health'
-);
-
-comprobar(
-    ($health['ok'] ?? false) === true,
-    'El endpoint health responde correctamente'
-);
-
+$health = getJson($apiUrl . '?accion=health');
+comprobar(($health['ok'] ?? false) === true, 'Health responde ok=true');
 comprobar(
     ($health['database'] ?? '') === 'jcatsen_pbio',
-    'La API confirma la base de datos jcatsen_pbio'
+    'Health confirma la base jcatsen_pbio'
 );
 
-
-/*
- * 2. Dispositivo del proyecto.
- */
-$dispositivos = getJson(
-    API_URL . '?accion=dispositivos'
-);
-
+$dispositivos = getJson($apiUrl . '?accion=dispositivos');
 $dispositivoEncontrado = false;
-
 foreach ($dispositivos as $dispositivo) {
-    if (
-        ($dispositivo['uuid'] ?? '')
-            === 'EPSG-GTI-PROY-3A'
-        && ($dispositivo['nombre'] ?? '')
-            === 'GTI Joan'
-    ) {
+    if (($dispositivo['uuid'] ?? '') === 'EPSG-GTI-PROY-3A'
+        && ($dispositivo['nombre'] ?? '') === 'GTI Joan') {
         $dispositivoEncontrado = true;
         break;
     }
 }
+comprobar($dispositivoEncontrado, 'La API devuelve el dispositivo GTI Joan');
 
-comprobar(
-    $dispositivoEncontrado,
-    'La API devuelve el dispositivo GTI Joan'
-);
-
-
-/*
- * 3. Tipos de medida utilizados por el proyecto.
- */
-$tipos = getJson(
-    API_URL . '?accion=tipos'
-);
-
+$tipos = getJson($apiUrl . '?accion=tipos');
 $o3Encontrado = false;
 $temperaturaEncontrada = false;
-
 foreach ($tipos as $tipo) {
-    if (
-        (int)($tipo['tipoMedidaId'] ?? -1) === 14
+    if ((int)($tipo['tipoMedidaId'] ?? -1) === 14
         && ($tipo['nombre'] ?? '') === 'O3'
-        && ($tipo['unidad'] ?? '') === 'ppb'
-    ) {
+        && ($tipo['unidad'] ?? '') === 'ppb') {
         $o3Encontrado = true;
     }
 
-    if (
-        (int)($tipo['tipoMedidaId'] ?? -1) === 12
+    if ((int)($tipo['tipoMedidaId'] ?? -1) === 12
         && ($tipo['nombre'] ?? '') === 'Temperatura'
-    ) {
+        && ($tipo['unidad'] ?? '') === '°C') {
         $temperaturaEncontrada = true;
     }
 }
+comprobar($o3Encontrado, 'La API devuelve O3 con ID 14 y unidad ppb');
+comprobar($temperaturaEncontrada, 'La API devuelve Temperatura con ID 12 y unidad °C');
 
-comprobar(
-    $o3Encontrado,
-    'La API devuelve O3 con ID 14 y unidad ppb'
-);
-
-comprobar(
-    $temperaturaEncontrada,
-    'La API devuelve Temperatura con ID 12'
-);
-
-
-/*
- * 4. Listado de medidas.
- */
-$medidas = getJson(API_URL);
-
-comprobar(
-    is_array($medidas),
-    'La API devuelve una coleccion de medidas'
-);
-
+$medidas = getJson($apiUrl . '?accion=medidas');
+comprobar(is_array($medidas), 'La API devuelve una colección de medidas');
 
 echo PHP_EOL;
-echo "Resultado: "
-    . $testsCorrectos
-    . "/"
-    . $testsEjecutados
-    . " tests correctos."
-    . PHP_EOL;
-
-echo "API INTEGRACION TEST: OK"
-    . PHP_EOL;
+echo "Resultado: $testsCorrectos/$testsEjecutados tests correctos." . PHP_EOL;
+echo "API INTEGRACION TEST: OK" . PHP_EOL;

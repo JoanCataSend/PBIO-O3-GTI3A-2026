@@ -1,124 +1,207 @@
 # firmware_design.md
 
-## Component Design (Diseño del Componente)
+## Diseño del Componente
 
-**Componente:** `firmware`
-**Implementación canónica para revisión:** `src/firmware/`
-**Código operativo equivalente:** `firmware/NodoO3/`
+**Componente:** `firmware`  
+**Implementación:** `src/firmware/`  
+**Lenguaje:** C++ para Arduino / Adafruit nRF52.
 
-El componente genera medidas ficticias reproducibles para Sprint 0 y las publica como iBeacon BLE. El programa principal coordina tres clases: `Medidor`, `Publicador` y `EmisoraBLE`.
+Este diseño recoge la arquitectura obtenida por ingeniería inversa del firmware proporcionado y su adaptación al Sprint 0. Se mantiene la separación entre adquisición, traducción al protocolo y radio BLE.
 
-
-### Tipos lógicos comunes
-
-```text
-N      número natural
-Z      número entero
-R      número real
-VoF    booleano
-Texto  cadena de caracteres
-[T]    colección de T
-[T]_n  array de T de tamaño fijo n
-JSON   Texto con estructura JSON
-```
-
-Tipos del dominio:
+### Tipos lógicos
 
 ```text
-MedidaEntrada = (
-    uuid:Texto,
-    tipoMedidaId:N,
-    valor:Z,
-    contador:N,
-    rssi:Z
-)
+UUIDProyecto = [N]_16
 
-MedidaVista = (
-    medidaId:N,
-    dispositivoId:N,
-    uuid:Texto,
-    dispositivo:Texto,
-    tipoMedidaId:N,
-    tipoMedida:Texto,
-    unidad:Texto,
-    valor:Z,
-    contador:N,
-    rssi:Z,
-    fechaHora:Texto
-)
-```
-
-
-### Arquitectura
-
-```text
-NodoO3
-  |
-  +--> Medidor
-  |
-  +--> Publicador
-          |
-          +--> EmisoraBLE
-```
-
-### Contratos públicos y privados
-
-```text
-Medidor() -->
-iniciarMedidor() -->
-medirO3() --> valorO3:Z
-medirTemperatura() --> temperatura:Z
-
-EmisoraBLE(nombre:Texto, fabricanteID:N, potenciaRadio:Z) -->
-encenderEmisora() -->
-emitirAnuncioIBeacon(uuid:[N]_16, major:N, minor:N, rssi1m:Z) -->
-detenerAnuncio() -->
-
-Publicador() -->
-encenderEmisora() -->
-publicarO3(valorPPB:Z, contador:N, tiempoEmisionMs:N) -->
-publicarTemperatura(temperaturaC:Z, contador:N, tiempoEmisionMs:N) -->
-publicar(idMedida:N, valor:Z, contador:N, tiempoEmisionMs:N) -->   [privada]
-```
-
-### Algoritmo de publicación
-
-```text
-Precondición: 0 <= contador <= 255
-major <- (idMedida << 8) OR contador
-minor <- representación de 16 bits de valor
-emitirAnuncioIBeacon(UUID_PROYECTO, major, minor, RSSI)
-esperar tiempoEmisionMs
-detenerAnuncio()
+MedicionId = { TEMPERATURA, O3 }
 ```
 
 Constantes de protocolo:
 
 ```text
-NOMBRE_NODO = "GTI Joan"
-UUID_PROYECTO = ASCII("EPSG-GTI-PROY-3A")
-ID_CO2 = 11
+UUID_PROYECTO = "EPSG-GTI-PROY-3A"
 ID_TEMPERATURA = 12
-ID_RUIDO = 13
 ID_O3 = 14
-O3_FAKE = 123 ppb
-TEMPERATURA_FAKE = -12 °C
+O3_FAKE = 123
+TEMPERATURA_FAKE = -12
 ```
 
-`setup()` inicializa puerto serie, medidor y BLE. `loop()` incrementa el contador, publica O3 durante 1200 ms, espera 300 ms, publica temperatura durante 1200 ms y espera 1500 ms.
+### Arquitectura
 
-## Design Clarifications (Aclaraciones del Diseño)
+```text
+NodoO3.ino
+   |
+   +--> Medidor
+   |
+   +--> Publicador
+           |
+           +--> EmisoraBLE
+```
 
-- Sprint 0 usa valores estáticos (`123` y `-12`) de forma deliberada para demostrar el flujo completo sin depender de la calibración del sensor real.
-- `Major` empaqueta el identificador de medida en los 8 bits altos y el contador en los 8 bits bajos.
-- `Minor` conserva el patrón de 16 bits del valor; Android interpreta O3 sin signo y temperatura como entero con signo de 16 bits.
-- El advertising es no conectable y escaneable; el fabricante es `0x004C` y el intervalo se configura en 100 ms.
-- El componente no conoce HTTP, MariaDB ni la interfaz gráfica.
+`NodoO3.ino` coordina el ciclo. `Medidor` produce las medidas ficticias. `Publicador` codifica Major/Minor. `EmisoraBLE` es la única clase que conoce Bluefruit y el advertising.
 
-## General Rules (Reglas Generales)
+### Clase `Medidor`
 
-- **Programming Language / Lenguaje de Programación:** C++ para Arduino, usando el core Adafruit nRF52 y Bluefruit.
-- **Function/Method Headers / Encabezados de Funciones/Métodos:** cada función o método incluye su diseño lógico en un bloque de comentario delimitado por `--------------------` inmediatamente antes de la implementación.
-- **Code Readability / Legibilidad del Código:** clases con responsabilidad única, constantes de protocolo explícitas, nombres descriptivos y lógica de codificación separada del hardware BLE.
-- **Automated Testing / Pruebas Automatizadas:** `src/firmware/tests/firmware_contract_test.py` comprueba automáticamente los valores fake, los IDs y la fórmula de codificación `Major`; la decodificación complementaria también se prueba en los tests Android.
-- **Source correspondence / Correspondencia:** `src/firmware/` contiene una copia exacta y normalizada del firmware operativo de `firmware/NodoO3/` para que el revisor pueda asociar directamente este diseño con su implementación.
+No mantiene estado de dominio.
+
+```text
+                 -------- Medidor --------
+                 |
+                 |
+              --> Medidor() -->
+                 |
+                 |
+              --> iniciarMedidor() -->
+                 |
+                 |
+valor_o3: N  <-- medirO3() -->
+                 |
+                 |
+temperatura: Z <-- medirTemperatura() -->
+                 |
+                 -------------------------
+```
+
+Contratos:
+
+```text
+medirO3() --> valor_o3: N
+medirTemperatura() --> temperatura: Z
+```
+
+Postcondiciones Sprint 0:
+
+```text
+valor_o3 = 123
+temperatura = -12
+```
+
+### Clase `EmisoraBLE`
+
+Estado privado:
+
+```text
+nombre: Text
+fabricante_id: N
+potencia_radio: Z
+```
+
+```text
+                      ----------- EmisoraBLE -----------
+                      |
+                      | nombre: Text
+                      | fabricante_id: N
+                      | potencia_radio: Z
+                      |
+nombre_emisora: Text, |
+fabricante: N,        |
+tx_power: Z       --> EmisoraBLE() -->
+                      |
+                      |
+                   --> encenderEmisora() -->
+                      |
+                      |
+uuid: [N]_16,         |
+major: N,             |
+minor: N,             |
+rssi_1m: Z        --> emitirAnuncioIBeacon() -->
+                      |
+                      |
+                   --> detenerAnuncio() -->
+                      |
+                      ----------------------------------
+```
+
+### Clase `Publicador`
+
+Estado privado:
+
+```text
+beacon_uuid: [N]_16
+la_emisora: EmisoraBLE
+rssi_1m: Z
+```
+
+El método privado `publicar()` queda encapsulado y es reutilizado por las dos operaciones públicas.
+
+```text
+                         ------------ Publicador ------------
+                         |
+                         | beacon_uuid: [N]_16
+                         | la_emisora: EmisoraBLE
+                         | rssi_1m: Z
+                         |
+                         | id_medida: N, valor: Z,
+                         | contador: N, tiempo_emision_ms: N
+                         | --> publicar() -->
+                         |
+                      --> Publicador() -->
+                         |
+                         |
+                      --> encenderEmisora() -->
+                         |
+                         |
+valor_ppb: N,           |
+contador: N,            |
+tiempo_emision_ms: N --> publicarO3() -->
+                         |
+                         |
+temperatura_c: Z,       |
+contador: N,            |
+tiempo_emision_ms: N --> publicarTemperatura() -->
+                         |
+                         -------------------------------------
+```
+
+Algoritmo lógico de `publicar()`:
+
+```text
+major <- (id_medida << 8) OR contador
+minor <- representación de 16 bits de valor
+emitirAnuncioIBeacon(beacon_uuid, major, minor, rssi_1m)
+esperar tiempo_emision_ms
+detenerAnuncio()
+```
+
+### Programa principal
+
+```text
+setup() -->
+loop() -->
+```
+
+`setup()`:
+
+```text
+inicializar puerto serie
+iniciarMedidor()
+encenderEmisora()
+```
+
+`loop()`:
+
+```text
+contador <- contador + 1
+valor_o3 <- medirO3()
+publicarO3(valor_o3, contador, 1200)
+esperar 300
+temperatura <- medirTemperatura()
+publicarTemperatura(temperatura, contador, 1200)
+esperar 1500
+```
+
+## Aclaraciones del Diseño
+
+- Los identificadores del código C++ pueden usar `camelCase`; en el diseño lógico se expresan como variables minúsculas con guion bajo, tal como exige la notación oficial.
+- El Sprint 0 **no lee ADC ni sensor físico**: las medidas son constantes y editables en `Medidor.h` para la demostración presencial.
+- `Major` reserva 8 bits para el tipo y 8 para el contador: `major = (id_medida << 8) OR contador`.
+- `Minor` transporta los 16 bits del valor. O3 se interpreta sin signo y temperatura en complemento a dos.
+- Solo se conservan los IDs realmente publicados en este Sprint (`12` y `14`); no se mantienen tipos sin uso.
+- La radio BLE está encapsulada en `EmisoraBLE`; `Medidor` no conoce BLE y `NodoO3.ino` no construye tramas.
+
+## Reglas Generales
+
+- **Lenguaje de Programación:** C++ para Arduino con Bluefruit52Lib.
+- **Encabezados de Funciones/Métodos:** cada función o método debe incluir su diseño lógico dentro de un bloque delimitado por líneas `--------------------` y una breve descripción.
+- **Legibilidad del Código:** nombres semánticos y responsabilidades segregadas; evitar comentarios que repitan literalmente el código.
+- **Pruebas Automatizadas:** `src/firmware/tests/firmware_contract_test.py` comprueba IDs, valores ficticios, UUID y empaquetado Major; la recepción BLE se valida además en Android y en la prueba presencial.

@@ -1,15 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * Archivo: LogicaUnitTest.php
- * Descripción: tests automáticos unitarios de la lógica de negocio sin conexión BD.
- * Copyright: 2026 Joan (uso académico PBIO - UPV)
- * Fecha: 2026-10-01
- * Autor: Joan
- * Aportación: pruebas unitarias de validación y normalización de la lógica.
+ * Descripción: pruebas unitarias automáticas de la lógica sin conexión a MariaDB.
+ * Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
+ * Fecha: 2026-10-07
+ * Autor: Joan Catala Sendra
+ * Aportación: criterios reproducibles de validación, normalización y consulta.
  */
+
+declare(strict_types=1);
 
 require_once __DIR__ . '/../Logica.php';
 
@@ -18,7 +18,8 @@ $testsCorrectos = 0;
 
 /*
  * --------------------
- * Diseño lógico: condicion:VoF, nombre:Texto --> comprobar() --> | Error.
+ * Diseño lógico: condicion: B, nombre: Text --> comprobar() -->
+ * Descripción: termina el proceso si una condición de prueba no se cumple.
  * --------------------
  */
 function comprobar(bool $condicion, string $nombre): void
@@ -38,7 +39,8 @@ function comprobar(bool $condicion, string $nombre): void
 
 /*
  * --------------------
- * Diseño lógico: funcion:Funcion, claseEsperada:Texto, nombre:Texto --> esperarExcepcion() --> | Error.
+ * Diseño lógico: clase_esperada: Text, nombre: Text --> esperarExcepcion() -->
+ * Descripción: verifica que una operación rechazada lance la excepción esperada.
  * --------------------
  */
 function esperarExcepcion(
@@ -49,20 +51,13 @@ function esperarExcepcion(
     try {
         $funcion();
     } catch (Throwable $e) {
-        comprobar(
-            $e instanceof $claseEsperada,
-            $nombre
-        );
+        comprobar($e instanceof $claseEsperada, $nombre);
         return;
     }
 
     comprobar(false, $nombre);
 }
 
-
-/*
- * 1. Una medida correcta debe superar la validación.
- */
 $medidaValida = [
     'uuid' => 'EPSG-GTI-PROY-3A',
     'tipoMedidaId' => 14,
@@ -72,94 +67,80 @@ $medidaValida = [
 ];
 
 validarMedidaEntrada($medidaValida);
-comprobar(
-    true,
-    'Una MedidaEntrada valida supera la validacion'
-);
+comprobar(true, 'Una MedidaEntrada válida supera la validación');
 
-
-/*
- * 2. Deben estar presentes todos los campos obligatorios.
- */
 $sinUuid = $medidaValida;
 unset($sinUuid['uuid']);
-
 esperarExcepcion(
     fn() => validarMedidaEntrada($sinUuid),
     InvalidArgumentException::class,
     'Se rechaza una medida sin uuid'
 );
 
-
-/*
- * 3. El uuid no puede estar vacío.
- */
 $uuidVacio = $medidaValida;
-$uuidVacio['uuid'] = '   ';
-
+$uuidVacio['uuid'] = '';
 esperarExcepcion(
     fn() => validarMedidaEntrada($uuidVacio),
     InvalidArgumentException::class,
-    'Se rechaza un uuid vacio'
+    'Se rechaza un uuid vacío'
 );
 
+$uuidCorto = $medidaValida;
+$uuidCorto['uuid'] = 'ABC';
+esperarExcepcion(
+    fn() => validarMedidaEntrada($uuidCorto),
+    InvalidArgumentException::class,
+    'Se rechaza un uuid que no ocupa 16 caracteres'
+);
 
-/*
- * 4. Los campos numéricos deben ser enteros.
- */
 $valorNoEntero = $medidaValida;
 $valorNoEntero['valor'] = 'abc';
-
 esperarExcepcion(
     fn() => validarMedidaEntrada($valorNoEntero),
     InvalidArgumentException::class,
-    'Se rechaza un valor que no es entero'
+    'Se rechaza un valor no entero'
 );
 
-
-/*
- * 5. El contador debe estar entre 0 y 255.
- */
 $contadorNegativo = $medidaValida;
 $contadorNegativo['contador'] = -1;
-
 esperarExcepcion(
     fn() => validarMedidaEntrada($contadorNegativo),
     InvalidArgumentException::class,
     'Se rechaza contador menor que 0'
 );
 
-$contadorDemasiadoGrande = $medidaValida;
-$contadorDemasiadoGrande['contador'] = 256;
-
+$contadorGrande = $medidaValida;
+$contadorGrande['contador'] = 256;
 esperarExcepcion(
-    fn() => validarMedidaEntrada($contadorDemasiadoGrande),
+    fn() => validarMedidaEntrada($contadorGrande),
     InvalidArgumentException::class,
     'Se rechaza contador mayor que 255'
 );
 
+$valorPequeno = $medidaValida;
+$valorPequeno['valor'] = -32769;
+esperarExcepcion(
+    fn() => validarMedidaEntrada($valorPequeno),
+    InvalidArgumentException::class,
+    'Se rechaza valor menor que el rango de Minor'
+);
 
-/*
- * 6. Los límites 0 y 255 son válidos.
- */
+$valorGrande = $medidaValida;
+$valorGrande['valor'] = 65536;
+esperarExcepcion(
+    fn() => validarMedidaEntrada($valorGrande),
+    InvalidArgumentException::class,
+    'Se rechaza valor mayor que el rango de Minor'
+);
+
 $contadorCero = $medidaValida;
 $contadorCero['contador'] = 0;
 validarMedidaEntrada($contadorCero);
-
 $contadorMaximo = $medidaValida;
 $contadorMaximo['contador'] = 255;
 validarMedidaEntrada($contadorMaximo);
+comprobar(true, 'Los contadores 0 y 255 son válidos');
 
-comprobar(
-    true,
-    'Los contadores 0 y 255 son validos'
-);
-
-
-/*
- * 7. normalizarMedidaVista debe convertir los campos
- *    numéricos devueltos por MariaDB a enteros PHP.
- */
 $fila = [
     'medidaId' => '10',
     'dispositivoId' => '1',
@@ -171,11 +152,10 @@ $fila = [
     'valor' => '123',
     'contador' => '16',
     'rssi' => '-58',
-    'fechaHora' => '2026-10-01T10:00:00.000000'
+    'fechaHora' => '2026-10-07T10:00:00'
 ];
 
 $normalizada = normalizarMedidaVista($fila);
-
 comprobar(
     is_int($normalizada['medidaId'])
     && is_int($normalizada['dispositivoId'])
@@ -183,28 +163,21 @@ comprobar(
     && is_int($normalizada['valor'])
     && is_int($normalizada['contador'])
     && is_int($normalizada['rssi']),
-    'MedidaVista normaliza los campos numericos a enteros'
+    'MedidaVista normaliza sus campos numéricos'
 );
 
 comprobar(
-    $normalizada['valor'] === 123
-    && $normalizada['rssi'] === -58,
-    'MedidaVista conserva correctamente los valores numericos'
+    $normalizada['valor'] === 123 && $normalizada['rssi'] === -58,
+    'MedidaVista conserva los valores después de normalizar'
 );
 
-
-/*
- * 8. La consulta base debe unir Medida, Dispositivo y TipoMedida.
- */
 $sql = consultaMedidaVista();
-
 comprobar(
     str_contains($sql, 'FROM Medida m')
     && str_contains($sql, 'INNER JOIN Dispositivo d')
     && str_contains($sql, 'INNER JOIN TipoMedida t'),
-    'La consulta MedidaVista utiliza las tres tablas del diseño'
+    'La vista de medida une exactamente las tres tablas del diseño'
 );
-
 
 echo PHP_EOL;
 echo "Resultado: $testsCorrectos/$testsEjecutados tests correctos." . PHP_EOL;

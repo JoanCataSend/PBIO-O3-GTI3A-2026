@@ -13,10 +13,12 @@ local.properties
 .externalNativeBuild/
 captures/
 
-# Configuración privada del servidor
-server/SDBaseDatos.php
+# Configuración privada del backend
+src/business_logic/SDBaseDatos.php
+.env
+.env.*
 
-# Arduino compilado
+# Arduino / compilación
 *.hex
 *.bin
 *.elf
@@ -37,5 +39,6 @@ desktop.ini
 *.swp
 *~
 
-# Copias/paquetes locales que no deben entrar en el repositorio
-android.zip
+# Paquetes/exportaciones locales
+*.zip
+!*.zip.example
