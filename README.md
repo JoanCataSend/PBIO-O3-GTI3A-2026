@@ -192,7 +192,16 @@ Integración contra un servidor desplegado:
 php src/api_rest/tests/ApiIntegracionTest.php
 ```
 
-Puede sobrescribirse la URL mediante `PBIO_API_URL`. Este test necesita red y un backend operativo; por ello se mantiene separado de los tests puramente locales.
+Puede sobrescribirse la URL mediante `PBIO_API_URL`. Por defecto el test comprueba lecturas y respuestas de error sin insertar filas. Para incluir también un POST válido que escribe una medida de prueba real:
+
+```bash
+# PowerShell
+$env:PBIO_API_WRITE_TEST="1"
+php src/api_rest/tests/ApiIntegracionTest.php
+Remove-Item Env:PBIO_API_WRITE_TEST
+```
+
+Este test necesita red y un backend operativo; por ello se mantiene separado de los tests puramente locales.
 
 En Windows, `scripts/test-sprint0.ps1` agrupa los tests locales y permite activar opcionalmente la integración remota.
 

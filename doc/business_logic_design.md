@@ -4,7 +4,7 @@
 
 **Componente:** `business_logic`  
 **Implementación:** `src/business_logic/`  
-**Lenguaje:** PHP 8.
+**Lenguaje:** PHP 8.0 o superior.
 
 La lógica de negocio es la única capa que valida datos de dominio y accede a MariaDB. No conoce códigos HTTP, HTML ni elementos de interfaz.
 
@@ -102,6 +102,8 @@ fila: MedidaVistaBD --> normalizarMedidaVista() --> medida: MedidaVista
 uuid existe y tiene 16 caracteres
 tipo_medida_id es entero y cabe en 8 bits
 valor es entero y cabe en los 16 bits transportados por Minor
+si tipo_medida_id = 14 (O3), 0 <= valor <= 65535
+si tipo_medida_id = 12 (Temperatura), -32768 <= valor <= 32767
 contador es entero y 0 <= contador <= 255
 rssi es entero
 ```
@@ -135,7 +137,7 @@ devolver MedidaVista normalizada
 
 ## Reglas Generales
 
-- **Lenguaje de Programación:** PHP 8 con `declare(strict_types=1)` y `mysqli`.
+- **Lenguaje de Programación:** PHP 8.0 o superior con `declare(strict_types=1)` y `mysqli`.
 - **Encabezados de Funciones/Métodos:** cada función debe incluir su firma lógica entre `--------------------` y una breve descripción.
 - **Legibilidad del Código:** validación, persistencia, consulta y normalización deben permanecer separadas; no introducir HTTP en esta capa.
-- **Pruebas Automatizadas:** `src/business_logic/tests/LogicaUnitTest.php` cubre entrada válida, campos ausentes, UUID, límites de contador/valor, normalización y contrato de la consulta.
+- **Pruebas Automatizadas:** `src/business_logic/tests/LogicaUnitTest.php` cubre entrada válida, campos ausentes, UUID, límites de contador/valor, dominios específicos de O3 y temperatura, normalización y contrato de la consulta.

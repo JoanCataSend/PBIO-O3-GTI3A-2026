@@ -350,6 +350,18 @@ function validarMedidaEntrada(array $datos): void
         throw new InvalidArgumentException('valor fuera del rango transportable por Minor');
     }
 
+    // En el protocolo PBIO actual O3 usa Minor como N de 16 bits,
+    // mientras que temperatura usa Minor como Z de 16 bits.
+    if ($tipoMedidaId === 14 && $valor < 0) {
+        throw new InvalidArgumentException('El valor de O3 debe estar entre 0 y 65535');
+    }
+
+    if ($tipoMedidaId === 12 && $valor > 32767) {
+        throw new InvalidArgumentException(
+            'La temperatura debe estar entre -32768 y 32767'
+        );
+    }
+
     if ($contador < 0 || $contador > 255) {
         throw new InvalidArgumentException('contador fuera de rango');
     }

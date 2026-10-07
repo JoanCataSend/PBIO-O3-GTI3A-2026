@@ -4,7 +4,7 @@
 
 **Componente:** `api_rest`  
 **Implementación:** `src/api_rest/`  
-**Lenguaje:** PHP 8.
+**Lenguaje:** PHP 8.0 o superior.
 
 Este componente es un adaptador. Interpreta HTTP/JSON, llama a funciones ya diseñadas en `business_logic` y traduce resultados/excepciones a códigos HTTP. No contiene reglas de negocio ni SQL.
 
@@ -101,7 +101,7 @@ Throwable no previsto    -> 500 con mensaje genérico
 
 ## Reglas Generales
 
-- **Lenguaje de Programación:** PHP 8.
+- **Lenguaje de Programación:** PHP 8.0 o superior; no usar tipos o sintaxis introducidos después de PHP 8.0.
 - **Encabezados de Funciones/Métodos:** toda función propia debe incluir diseño lógico entre `--------------------` y breve descripción.
 - **Legibilidad del Código:** el adaptador debe limitarse a parseo, despacho y códigos HTTP; cualquier regla de dominio pertenece a `business_logic`.
-- **Pruebas Automatizadas:** `src/api_rest/tests/ApiIntegracionTest.php` realiza pruebas de solo lectura sobre la API desplegada y admite `PBIO_API_URL` para cambiar el servidor de prueba.
+- **Pruebas Automatizadas:** `src/api_rest/tests/ApiIntegracionTest.php` comprueba lecturas y códigos 400/404/405 sin modificar la BBDD por defecto. Admite `PBIO_API_URL` para cambiar el servidor y `PBIO_API_WRITE_TEST=1` para habilitar de forma explícita un POST válido que inserta una medida de prueba.

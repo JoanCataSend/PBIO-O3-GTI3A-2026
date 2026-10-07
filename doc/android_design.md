@@ -253,4 +253,4 @@ Una única pantalla muestra estado BLE, botones **Buscar GTI Joan** y **Detener 
 - **Lenguaje de Programación:** Java para Android.
 - **Encabezados de Funciones/Métodos:** cada método debe incluir diseño lógico entre `--------------------` y breve descripción; se omiten detalles propios del framework que no forman parte del contrato lógico.
 - **Legibilidad del Código:** `MainActivity` coordina UI/BLE; `TramaIBeacon` analiza; `Utilidades` convierte; `LogicaFake` expone el contrato remoto; `PeticionarioREST` hace HTTP.
-- **Pruebas Automatizadas:** JUnit cubre Major/Minor y URL; el test instrumentado valida el package instalado. La recepción BLE se valida de forma presencial con hardware real.
+- **Pruebas Automatizadas:** JUnit cubre Major/Minor, decodificación signed/unsigned, análisis de una trama iBeacon completa, rechazo de bytes sin prefijo iBeacon y URL; el test instrumentado valida el package instalado. La recepción BLE por radio se valida de forma presencial con hardware real.

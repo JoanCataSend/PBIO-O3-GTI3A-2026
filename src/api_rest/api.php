@@ -45,7 +45,7 @@ require_once $rutaLogica;
  * Descripción: establece el estado HTTP, serializa JSON y finaliza la respuesta.
  * --------------------
  */
-function responder(int $codigo, mixed $datos): never
+function responder(int $codigo, mixed $datos): void
 {
     http_response_code($codigo);
 

@@ -141,6 +141,39 @@ $contadorMaximo['contador'] = 255;
 validarMedidaEntrada($contadorMaximo);
 comprobar(true, 'Los contadores 0 y 255 son válidos');
 
+$o3Negativo = $medidaValida;
+$o3Negativo['valor'] = -1;
+esperarExcepcion(
+    fn() => validarMedidaEntrada($o3Negativo),
+    InvalidArgumentException::class,
+    'Se rechaza O3 negativo porque Minor se interpreta como N de 16 bits'
+);
+
+$o3Maximo = $medidaValida;
+$o3Maximo['valor'] = 65535;
+validarMedidaEntrada($o3Maximo);
+comprobar(true, 'O3 acepta el máximo de 16 bits sin signo');
+
+$temperaturaMinima = $medidaValida;
+$temperaturaMinima['tipoMedidaId'] = 12;
+$temperaturaMinima['valor'] = -32768;
+validarMedidaEntrada($temperaturaMinima);
+
+$temperaturaMaxima = $medidaValida;
+$temperaturaMaxima['tipoMedidaId'] = 12;
+$temperaturaMaxima['valor'] = 32767;
+validarMedidaEntrada($temperaturaMaxima);
+comprobar(true, 'Temperatura acepta los extremos de Z de 16 bits');
+
+$temperaturaFueraRango = $medidaValida;
+$temperaturaFueraRango['tipoMedidaId'] = 12;
+$temperaturaFueraRango['valor'] = 32768;
+esperarExcepcion(
+    fn() => validarMedidaEntrada($temperaturaFueraRango),
+    InvalidArgumentException::class,
+    'Se rechaza temperatura superior a 32767'
+);
+
 $fila = [
     'medidaId' => '10',
     'dispositivoId' => '1',
