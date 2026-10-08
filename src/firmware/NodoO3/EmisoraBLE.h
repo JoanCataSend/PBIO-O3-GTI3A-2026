@@ -25,7 +25,7 @@ public:
   /*
    * --------------------
    * Diseño lógico:
-   * nombre_emisora: Text, fabricante: N, tx_power: Z --> EmisoraBLE() -->
+   * nombre_emisora: Text, fabricante: N, tx_power: Z --> EmisoraBLE()
    * Descripción: construye una emisora con nombre, fabricante y potencia.
    * --------------------
    */
@@ -38,7 +38,7 @@ public:
 
   /*
    * --------------------
-   * Diseño lógico: encenderEmisora() -->
+   * Diseño lógico: encenderEmisora()
    * Descripción: inicializa Bluefruit y deja el advertising detenido.
    * --------------------
    */
@@ -54,7 +54,7 @@ public:
   /*
    * --------------------
    * Diseño lógico:
-   * uuid: [N]_16, major: N, minor: N, rssi_1m: Z --> emitirAnuncioIBeacon() -->
+   * uuid: [N]_16, major: N, minor: N, rssi_1m: Z --> emitirAnuncioIBeacon()
    * Descripción: configura y comienza un anuncio iBeacon no conectable.
    * --------------------
    */
@@ -112,7 +112,7 @@ public:
 
   /*
    * --------------------
-   * Diseño lógico: detenerAnuncio() -->
+   * Diseño lógico: detenerAnuncio()
    * Descripción: detiene el advertising si se encuentra activo.
    * --------------------
    */

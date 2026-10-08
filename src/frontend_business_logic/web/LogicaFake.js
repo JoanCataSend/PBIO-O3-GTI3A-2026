@@ -1,10 +1,10 @@
 /*
  * Archivo: LogicaFake.js
- * Descripción: adaptador lógico del navegador para consultar la API REST.
+ * Descripción: proxy de lógica de negocio del navegador con comunicación encapsulada.
  * Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
  * Fecha: 2026-10-07
  * Autor: Joan Catala Sendra
- * Aportación: interfaz asíncrona para medidas, dispositivos, tipos y health.
+ * Aportación: interfaz de dominio del cliente web equivalente al backend.
  */
 
 "use strict";
@@ -15,7 +15,7 @@ const LogicaFake = (() => {
 
     /**
      * --------------------
-     * Diseño lógico: url: Text, opciones: PeticionHTTP --> pedir() --> datos: Text
+     * Diseño lógico: url: Text, opciones: Text --> pedir() --> datos: Text
      * Descripción: ejecuta fetch, interpreta Text y normaliza errores HTTP.
      * --------------------
      */
@@ -107,11 +107,11 @@ const LogicaFake = (() => {
 
     /**
      * --------------------
-     * Diseño lógico: health() --> estado: EstadoBD
+     * Diseño lógico: probarConexion() --> estado: EstadoBD
      * Descripción: comprueba que la API y la base de datos responden correctamente.
      * --------------------
      */
-    async function health() {
+    async function probarConexion() {
         return pedir(
             `${API}?accion=health`
         );
@@ -121,6 +121,6 @@ const LogicaFake = (() => {
         listarMedidas,
         listarDispositivos,
         listarTiposMedida,
-        health
+        probarConexion
     };
 })();

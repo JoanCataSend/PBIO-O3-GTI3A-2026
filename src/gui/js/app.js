@@ -80,7 +80,7 @@ async function iniciar() {
 
     try {
 
-        await LogicaFake.health();
+        await LogicaFake.probarConexion();
 
         ui.estado.textContent =
             "Servidor conectado";

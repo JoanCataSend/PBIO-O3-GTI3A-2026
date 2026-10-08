@@ -35,6 +35,8 @@ required_seed = [
     "(14, 'O3', 'ppb')",
 ]
 
+assert schema.count("CREATE TABLE IF NOT EXISTS") == 3, "El esquema debe contener exactamente tres tablas"
+
 for expected in required_schema:
     assert expected in schema, f"Falta en schema.sql: {expected}"
 

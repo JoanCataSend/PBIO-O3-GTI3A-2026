@@ -1,32 +1,24 @@
-# Prompt 5 - Lógica fake del navegador
+# Prompt 5 - Frontend business logic web
 
 ```text
-Implementa únicamente `src/web/js/LogicaFake.js`. No escribas HTML/CSS ni manipules DOM.
+Implementa únicamente `src/frontend_business_logic/web/LogicaFake.js` según `doc/frontend_business_logic_design.md`.
 
-OBJETIVO
-Ser la única capa del navegador que conoce `fetch` y la API REST.
+La GUI está en `src/gui/` y NO debe contener fetch. Este archivo es la única capa del navegador que conoce la comunicación.
 
-API
-Usa exclusivamente `const API = "api.php"` (ruta relativa, sin dominio absoluto).
-
-CONTRATOS
-url: Text,opciones: PeticionHTTP --> pedir() --> datos: Json
+INTERFAZ LÓGICA - nombres y firmas idénticos al backend
+probarConexion() --> estado: EstadoBD
 filtros: FiltrosMedida --> listarMedidas() --> medidas: [MedidaVista]
 listarDispositivos() --> dispositivos: [Dispositivo]
 listarTiposMedida() --> tipos: [TipoMedida]
-health() --> estado: EstadoBD
 
-REGLAS
-- `pedir()` debe comprobar `response.ok` y convertir errores HTTP en Error con mensaje del JSON si existe.
-- `listarMedidas()` solo añade parámetros no vacíos mediante URLSearchParams.
-- Acciones: dispositivos, tipos y health según el diseño REST.
-- No guardar estado de UI.
+IMPLEMENTACIÓN INTERNA
+- `const API = "api.php"`, sin host absoluto.
+- `pedir()` encapsula fetch, parseo de respuesta y errores.
+- `listarMedidas()` añade únicamente filtros no vacíos.
+- acciones: health, dispositivos y tipos.
+- no manipular DOM ni mantener estado visual.
 
-COMENTARIOS
-Cabecera completa con Joan Catala Sendra. Cada función con `--------------------`, firma lógica oficial y descripción.
+Cada función propia debe incluir bloque `--------------------`, diseño lógico y descripción.
 
-TEST
-El test web debe comprobar, al menos, que esta capa usa `api.php` relativo y no contiene URLs http/https codificadas.
-
-Entrega el archivo completo, sin frameworks ni dependencias externas.
+Genera/actualiza `src/frontend_business_logic/tests/web_proxy_test.js` para comprobar API relativa, ausencia de URLs absolutas, existencia de las cuatro operaciones públicas y que fetch solo aparece en este componente.
 ```

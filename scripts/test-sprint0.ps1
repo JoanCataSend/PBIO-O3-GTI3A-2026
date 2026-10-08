@@ -1,10 +1,10 @@
 <#
  Archivo: test-sprint0.ps1
- Descripción: ejecuta los tests locales reproducibles del Sprint 0 en Windows.
+ Descripción: ejecuta los tests locales reproducibles del Sprint 0 con la arquitectura del Agente v2.
  Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
  Fecha: 2026-10-07
  Autor: Joan Catala Sendra
- Aportación: ejecución agrupada de auditoría, contratos, lógica, web y Android.
+ Aportación: ejecución agrupada de auditoría, contratos, lógica, proxy frontend, GUI y Android.
 #>
 
 param(
@@ -15,6 +15,13 @@ param(
 $ErrorActionPreference = "Stop"
 $raiz = Split-Path -Parent $PSScriptRoot
 
+<#
+--------------------
+Diseño lógico: titulo: Text --> Ejecutar()
+Descripción: ejecuta una prueba y detiene el script si el proceso devuelve error.
+Nota: el bloque ejecutable es un mecanismo de PowerShell y se omite del diseño lógico.
+--------------------
+#>
 function Ejecutar($titulo, $comando) {
     Write-Host "`n=== $titulo ===" -ForegroundColor Cyan
     & $comando
@@ -23,20 +30,33 @@ function Ejecutar($titulo, $comando) {
 
 Push-Location $raiz
 try {
-    Ejecutar "Auditoría estructural" { python scripts/audit-repository.py }
+    Ejecutar "Auditoría Agente v2" { python scripts/audit-repository.py }
     Ejecutar "Contrato firmware" { python src/firmware/tests/firmware_contract_test.py }
     Ejecutar "Contrato base de datos" { python src/database/tests/schema_contract_test.py }
+    Ejecutar "Proxy frontend web" { node src/frontend_business_logic/tests/web_proxy_test.js }
+    Ejecutar "GUI web" { node src/gui/tests/gui_unit_test.js }
 
     $php = Get-Command php -ErrorAction SilentlyContinue
-    if (-not $php -and (Test-Path "C:\xampp\php\php.exe")) {
-        $php = Get-Item "C:\xampp\php\php.exe"
+
+    if ($php) {
+        $phpExe = $php.Source
     }
-    if (-not $php) {
-        throw "PHP no está disponible en PATH ni en C:\xampp\php\php.exe"
+    elseif (Test-Path "C:\xampp\php\php.exe") {
+        $phpExe = "C:\xampp\php\php.exe"
+    }
+    else {
+        $phpExe = $null
     }
 
-    Ejecutar "Lógica de negocio PHP" { & $php.Source src/business_logic/tests/LogicaUnitTest.php }
-    Ejecutar "Web JavaScript" { node src/web/tests/web_unit_test.js }
+    if ($phpExe) {
+        Ejecutar "Sintaxis lógica PHP" { & $phpExe -l src/business_logic/Logica.php }
+        Ejecutar "Sintaxis comunicación PHP" { & $phpExe -l src/communication/api.php }
+        Ejecutar "Sintaxis tests PHP" { & $phpExe -l src/business_logic/tests/LogicaUnitTest.php }
+        Ejecutar "Lógica de negocio PHP" { & $phpExe src/business_logic/tests/LogicaUnitTest.php }
+    }
+    else {
+        Write-Host "`n[AVISO] PHP no está disponible localmente; se omiten las pruebas PHP." -ForegroundColor Yellow
+    }
 
     if (-not $SinAndroid) {
         Write-Host "`n=== Android unit tests ===" -ForegroundColor Cyan
@@ -51,7 +71,10 @@ try {
     }
 
     if ($Integracion) {
-        Ejecutar "API desplegada" { & $php.Source src/api_rest/tests/ApiIntegracionTest.php }
+        if (-not $php) {
+            throw "La integración remota requiere PHP en PATH o C:\xampp\php\php.exe"
+        }
+        Ejecutar "Comunicación desplegada" { & $php.Source src/communication/tests/ApiIntegracionTest.php }
     }
 
     Write-Host "`nTests seleccionados finalizados correctamente." -ForegroundColor Green

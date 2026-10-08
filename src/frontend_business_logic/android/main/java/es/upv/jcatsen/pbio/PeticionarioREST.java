@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 
 import javax.net.ssl.SSLHandshakeException;
 
-public class PeticionarioREST {
+final class PeticionarioREST {
 
     /**
      * Resultado lógico asíncrono del transporte REST.

@@ -1,44 +1,44 @@
 # Prompt 2 - Lógica de negocio backend
 
 ```text
-Implementa `src/business_logic/Logica.php` en PHP 8.0 o superior respetando EXACTAMENTE el diseño previo. Esta capa NO conoce HTTP ni HTML.
+Implementa `src/business_logic/Logica.php` en PHP 8+ a partir de `doc/business_logic_design.md` y `doc/database_design.md`.
 
-TIPOS LÓGICOS
-MedidaEntrada=(uuid: Text,tipo_medida_id: N,valor: Z,contador: N,rssi: Z)
-EstadoBD=(ok: B,database: Text)
-MedidaVista=(medida_id: N,dispositivo_id: N,uuid: Text,dispositivo: Text,tipo_medida_id: N,tipo_medida: Text,unidad: Text,valor: Z,contador: N,rssi: Z,fecha_hora: Text)
+REQUISITO DE ARQUITECTURA
+La lógica de negocio debe depender solo de tipos de dominio y de persistencia. No debe importar, invocar ni referenciar el componente `communication`, sus rutas o clases de protocolo.
 
-OPERACIONES
-conexionBD() --> conexion: ConexionBD
+INTERFAZ LÓGICA
 probarConexion() --> estado: EstadoBD
 datos: MedidaEntrada --> insertarMedida() --> medida: MedidaVista
 medida_id: N --> buscarMedidaConId() --> medida: MedidaVista
 filtros: FiltrosMedida --> listarMedidas() --> medidas: [MedidaVista]
 listarDispositivos() --> dispositivos: [Dispositivo]
 listarTiposMedida() --> tipos: [TipoMedida]
-dispositivo_id: N,tipo_medida_id: N --> buscarUltimaMedida() --> medida: MedidaVista
-datos: MedidaEntrada --> validarMedidaEntrada() -->
+dispositivo_id: N, tipo_medida_id: N --> buscarUltimaMedida() --> medida: MedidaVista
+datos: MedidaEntrada --> validarMedidaEntrada()
+conexionBD() --> conexion: ConexionBD
 consultaMedidaVista() --> consulta: Text
-fila: MedidaVistaBD --> normalizarMedidaVista() --> medida: MedidaVista
+fila: MedidaVista --> normalizarMedidaVista() --> medida: MedidaVista
 
-REGLAS
-- `declare(strict_types=1)` y mysqli.
-- Credenciales en `SDBaseDatos.php`, nunca versionadas; entregar `SDBaseDatos.example.php` sin secretos.
-- Sentencias preparadas para valores variables.
-- uuid debe tener 16 caracteres.
-- tipoMedidaId en 0..255, contador en 0..255, valor transportable en -32768..65535 y rssi entero.
-- Para O3 (tipoMedidaId=14), valor debe ser 0..65535. Para Temperatura (tipoMedidaId=12), valor debe ser -32768..32767.
-- Comprobar que dispositivo y tipo existan antes de insertar.
-- Limitar listados a 500 filas y validar filtros.
-- Normalizar a enteros los campos numéricos devueltos por MariaDB.
-- No generar códigos HTTP.
+ALINEACIÓN CON BBDD
+Las consultas deben usar exactamente Dispositivo, TipoMedida y Medida con las columnas descritas en `database_design.md`. Usa sentencias preparadas para valores variables.
+
+VALIDACIÓN
+- uuid exactamente 16 caracteres.
+- tipoMedidaId y contador: 0..255.
+- O3 (14): 0..65535.
+- Temperatura (12): -32768..32767.
+- rssi entero.
+- comprobar existencia de dispositivo y tipo antes de insertar.
+- listados limitados a 500 filas.
+
+CONFIGURACIÓN
+`SDBaseDatos.php` es privado y no se versiona; entrega `SDBaseDatos.example.php` sin secretos.
 
 COMENTARIOS
-Cada archivo: nombre, descripción, copyright, fecha, autor Joan Catala Sendra y aportación.
-Cada función: bloque `--------------------`, firma en notación oficial (N,Z,R,B,Text, colecciones y tipos compuestos) y breve descripción.
+Cada función debe tener un bloque `--------------------` con diseño lógico usando solo N, Z, R, B, Text, agregaciones y colecciones, más una breve descripción.
 
 TESTS
-Genera `tests/LogicaUnitTest.php` sin necesitar BD real. Debe probar: entrada válida, campo ausente, uuid vacío/corto, valor no entero, límites de contador y valor, rechazo de O3 negativo, extremos de O3 y temperatura, normalización de MedidaVista y que la consulta base haga JOIN de las tres tablas.
+Genera `src/business_logic/tests/LogicaUnitTest.php` sin necesitar una BBDD real para las comprobaciones de validación y contrato estático. Cubre límites, normalización y que la consulta de vista relacione las tres tablas.
 
-No cambies el diseño ni mezcles REST con la lógica.
+No rediseñes la capa.
 ```

@@ -1,59 +1,30 @@
 # Prompt 1 - Base de datos
 
 ```text
-Actúa como implementador SQL. El diseño ya está decidido: NO lo sustituyas por otro.
+Implementa `src/database/` para MariaDB/InnoDB a partir de `doc/database_design.md`. El diseño está cerrado: no añadas ni elimines tablas.
 
-OBJETIVO
-Genera los archivos de `src/database/` para MariaDB/InnoDB a partir de este diseño:
+Debes conservar exactamente las tres tablas y su formato relacional:
+- Dispositivo(dispositivoId, uuid, nombre)
+- TipoMedida(tipoMedidaId, nombre, unidad)
+- Medida(medidaId, dispositivoId, tipoMedidaId, valor, contador, rssi, fechaHora)
 
-Dispositivo(
-    dispositivo_id: N PK AUTOINCREMENT,
-    uuid: Text UNIQUE NOT NULL,
-    nombre: Text NOT NULL
-)
+Respeta literalmente PRIMARY KEY, FOREIGN KEYS y CONSTRAINTS de `database_design.md`, incluidos UUID de 16 caracteres, límites de contador/valor, ON UPDATE CASCADE, ON DELETE RESTRICT e índices.
 
-TipoMedida(
-    tipo_medida_id: N PK,
-    nombre: Text UNIQUE NOT NULL,
-    unidad: Text NOT NULL
-)
+Genera:
+- `src/database/schema.sql`
+- `src/database/seed.sql`
+- `src/database/drop.sql`
+- `src/database/tests/schema_contract_test.py`
 
-Medida(
-    medida_id: N PK AUTOINCREMENT,
-    dispositivo_id: N FK -> Dispositivo.dispositivo_id,
-    tipo_medida_id: N FK -> TipoMedida.tipo_medida_id,
-    valor: Z NOT NULL,
-    contador: N NOT NULL,
-    rssi: Z NOT NULL,
-    fecha_hora: Text NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
-)
+Semilla mínima:
+- EPSG-GTI-PROY-3A / GTI Joan
+- 12 / Temperatura / °C
+- 14 / O3 / ppb
+No insertar tipos adicionales.
 
-RESTRICCIONES
-- uuid: exactamente 16 caracteres y único.
-- tipo_medida_id: TINYINT UNSIGNED.
-- valor: entre -32768 y 65535.
-- contador: entre 0 y 255.
-- FK con ON DELETE RESTRICT y ON UPDATE CASCADE.
-- Índices: (dispositivo_id,tipo_medida_id,fecha_hora,medida_id) y (tipo_medida_id,fecha_hora,medida_id).
-- No crear más tablas. No crear tabla de unidades.
+Cada archivo debe incluir cabecera con nombre, descripción, copyright, fecha, autor Joan Catala Sendra y aportación.
 
-SEMILLA
-- Dispositivo: EPSG-GTI-PROY-3A / GTI Joan.
-- Tipo 12: Temperatura / °C.
-- Tipo 14: O3 / ppb.
-- No insertar CO2 ni Ruido.
+El test Python debe verificar de forma automática las tres tablas, columnas, claves, CHECK, índices y semilla. Debe fallar si aparece una cuarta tabla o un tipo no previsto.
 
-ARCHIVOS
-- schema.sql
-- seed.sql
-- drop.sql
-- tests/schema_contract_test.py
-
-CABECERAS Y ESTILO
-Cada script debe incluir nombre, descripción, copyright 2026 Joan Catala Sendra (uso académico PBIO - UPV), fecha, autor y aportación. El SQL debe ser legible y reproducible.
-
-TEST AUTOMÁTICO
-El test Python debe leer los scripts reales y fallar si faltan tablas, FKs, CHECKs, índices, UUID o los dos tipos semilla; también debe fallar si aparecen CO2/Ruido en la semilla.
-
-Devuelve archivos completos, sin TODOs, credenciales ni rediseños.
+No incluyas credenciales ni cambies el diseño.
 ```

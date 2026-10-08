@@ -41,7 +41,7 @@ require_once $rutaLogica;
 
 /*
  * --------------------
- * Diseño lógico: codigo: N, datos: Json --> responder() -->
+ * Diseño lógico: codigo: N, datos: Text --> responder()
  * Descripción: establece el estado HTTP, serializa JSON y finaliza la respuesta.
  * --------------------
  */

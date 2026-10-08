@@ -23,7 +23,7 @@ public class MedidaEntrada {
     /**
      * --------------------
      * Diseño lógico:
-     * uuid: Text, tipo_medida_id: N, valor: Z, contador: N, rssi: Z --> MedidaEntrada() -->
+     * uuid: Text, tipo_medida_id: N, valor: Z, contador: N, rssi: Z --> MedidaEntrada()
      * Descripción: construye una medida de entrada inmutable.
      * --------------------
      */
@@ -43,7 +43,7 @@ public class MedidaEntrada {
 
     /**
      * --------------------
-     * Diseño lógico: toJson() --> json: Json
+     * Diseño lógico: toJson() --> texto: Text
      * Descripción: serializa todos los campos con los nombres esperados por la API.
      * --------------------
      */

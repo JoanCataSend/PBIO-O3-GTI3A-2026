@@ -1,18 +1,14 @@
-# Trazabilidad del uso de IA
+# Trazabilidad de uso de IA - Sprint 0
 
-La IA se usa como herramienta de implementación y revisión, pero el diseño actúa como contrato previo.
+La trazabilidad sigue el flujo requerido por la rúbrica: **diseño previo -> prompt -> implementación -> revisión**.
 
-## Flujo aplicado
+| Trabajo | Diseño de referencia | Prompt | Implementación resultante/revisada |
+|---|---|---|---|
+| Base de datos | `database_design.md` | `prompts/01_database.md` | `src/database/` |
+| Lógica de negocio servidor | `business_logic_design.md` | `prompts/02_business_logic.md` | `src/business_logic/` |
+| Comunicación REST | `communication_design.md` | `prompts/03_api_rest.md` | `src/communication/` |
+| Proxy Android | `frontend_business_logic_design.md` + `android_design.md` | `prompts/04_android_fake.md` | `src/frontend_business_logic/android/` |
+| Proxy web | `frontend_business_logic_design.md` | `prompts/05_web_fake.md` | `src/frontend_business_logic/web/` |
+| GUI web | `gui_design.md` | `prompts/06_web_ux.md` | `src/gui/` |
 
-```text
-diseño oficial -> prompt del componente -> código generado/adaptado -> tests -> revisión diseño/código
-```
-
-Los seis prompts de `doc/prompts/` corresponden a los seis entregables solicitados en la segunda tarea. La versión final se ha revisado en ambos sentidos:
-
-- **Diseño → código:** cada responsabilidad/operación diseñada debe localizarse en la implementación correspondiente.
-- **Código → diseño:** no se mantiene lógica de dominio relevante que no esté representada en el diseño.
-
-También se ha comprobado que las cabeceras lógicas usen exclusivamente los tipos, agregaciones y colecciones definidos por la notación oficial.
-
-La corrección funcional extremo a extremo se valida mediante `doc/acceptance_test.md`, porque el agente de revisión no sustituye la prueba presencial.
+La versión final se revisa además con `scripts/audit-repository.py`, los tests por componente y la prueba presencial extremo a extremo.

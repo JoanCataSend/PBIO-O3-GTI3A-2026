@@ -25,7 +25,7 @@ public class TramaIBeacon {
 
     /**
      * --------------------
-     * Diseño lógico: bytes: [N] --> TramaIBeacon() -->
+     * Diseño lógico: bytes: [N] --> TramaIBeacon()
      * Descripción: construye la trama y analiza inmediatamente su contenido.
      * --------------------
      */
@@ -34,14 +34,14 @@ public class TramaIBeacon {
         this.losBytes =
                 bytes == null
                         ? new byte[0]
-                        : bytes;
+                        : Arrays.copyOf(bytes, bytes.length);
 
         analizar();
     }
 
     /**
      * --------------------
-     * Diseño lógico: analizar() -->
+     * Diseño lógico: analizar()
      * Descripción: localiza el prefijo Apple+iBeacon y extrae los campos de la trama.
      * --------------------
      */
@@ -105,7 +105,7 @@ public class TramaIBeacon {
      * --------------------
      */
     public byte[] getUUID() {
-        return uuid;
+        return Arrays.copyOf(uuid, uuid.length);
     }
 
     /**
@@ -115,7 +115,7 @@ public class TramaIBeacon {
      * --------------------
      */
     public byte[] getMajor() {
-        return major;
+        return Arrays.copyOf(major, major.length);
     }
 
     /**
@@ -125,7 +125,7 @@ public class TramaIBeacon {
      * --------------------
      */
     public byte[] getMinor() {
-        return minor;
+        return Arrays.copyOf(minor, minor.length);
     }
 
     /**
@@ -145,6 +145,6 @@ public class TramaIBeacon {
      * --------------------
      */
     public byte[] getLosBytes() {
-        return losBytes;
+        return Arrays.copyOf(losBytes, losBytes.length);
     }
 }

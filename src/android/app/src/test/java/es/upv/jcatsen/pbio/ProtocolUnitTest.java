@@ -20,7 +20,7 @@ public class ProtocolUnitTest {
 
     /**
      * --------------------
-     * Diseño lógico: majorContieneIdMedidaYContador() -->
+     * Diseño lógico: majorContieneIdMedidaYContador()
      * Descripción: prueba automáticamente el criterio indicado.
      * Criterio: ID 14 y contador 16 deben producir Major 3600 y ser reversibles.
      * --------------------
@@ -39,7 +39,7 @@ public class ProtocolUnitTest {
 
     /**
      * --------------------
-     * Diseño lógico: tramaCompletaIBeaconSeAnalizaCorrectamente() -->
+     * Diseño lógico: tramaCompletaIBeaconSeAnalizaCorrectamente()
      * Descripción: construye un advertising completo y verifica prefijo, UUID, Major, Minor y TxPower.
      * Criterio: una trama PBIO realista debe quedar marcada como válida y conservar todos sus campos.
      * --------------------
@@ -71,7 +71,7 @@ public class ProtocolUnitTest {
 
     /**
      * --------------------
-     * Diseño lógico: tramaSinPrefijoIBeaconSeRechaza() -->
+     * Diseño lógico: tramaSinPrefijoIBeaconSeRechaza()
      * Descripción: verifica que bytes BLE sin 4C 00 02 15 no se acepten como iBeacon.
      * --------------------
      */
@@ -86,7 +86,7 @@ public class ProtocolUnitTest {
 
     /**
      * --------------------
-     * Diseño lógico: minorConSignoDecodificaTemperaturaSprint0() -->
+     * Diseño lógico: minorConSignoDecodificaTemperaturaSprint0()
      * Descripción: prueba automáticamente la decodificación del valor ficticio.
      * Criterio Sprint 0: FF F4 debe decodificarse como -12 °C.
      * --------------------
@@ -106,7 +106,7 @@ public class ProtocolUnitTest {
 
     /**
      * --------------------
-     * Diseño lógico: minorSinSignoDecodificaO3Sprint0() -->
+     * Diseño lógico: minorSinSignoDecodificaO3Sprint0()
      * Descripción: prueba automáticamente la decodificación del valor ficticio.
      * Criterio Sprint 0: 00 7B debe decodificarse como 123 ppb.
      * --------------------
@@ -123,4 +123,29 @@ public class ProtocolUnitTest {
                 Utilidades.bytesToUnsignedInt(minor)
         );
     }
+    /**
+     * --------------------
+     * Diseño lógico: tramaProtegeSuEstadoInterno()
+     * Descripción: verifica que constructor y getters no expongan arrays mutables internos.
+     * Criterio: modificar el array original o una copia devuelta no debe alterar la trama.
+     * --------------------
+     */
+    @Test
+    public void tramaProtegeSuEstadoInterno() {
+        byte[] anuncio = new byte[] {
+                0x4C, 0x00, 0x02, 0x15,
+                'E','P','S','G','-','G','T','I','-','P','R','O','Y','-','3','A',
+                0x0E, 0x10, 0x01, 0x41, (byte)0xCB
+        };
+
+        TramaIBeacon trama = new TramaIBeacon(anuncio);
+        anuncio[4] = 'X';
+
+        byte[] uuid = trama.getUUID();
+        uuid[0] = 'Y';
+
+        assertEquals("EPSG-GTI-PROY-3A", Utilidades.bytesToString(trama.getUUID()));
+        assertEquals('E', trama.getLosBytes()[4]);
+    }
+
 }

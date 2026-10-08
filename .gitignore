@@ -42,3 +42,6 @@ desktop.ini
 # Paquetes/exportaciones locales
 *.zip
 !*.zip.example
+
+# Artefactos generados de despliegue
+.dist/

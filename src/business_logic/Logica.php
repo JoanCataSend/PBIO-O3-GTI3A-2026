@@ -314,7 +314,7 @@ function buscarUltimaMedida(
 
 /*
  * --------------------
- * Diseño lógico: datos: MedidaEntrada --> validarMedidaEntrada() -->
+ * Diseño lógico: datos: MedidaEntrada --> validarMedidaEntrada()
  * Descripción: comprueba presencia, tipos y límites impuestos por el protocolo de 16 bits.
  * --------------------
  */
@@ -397,7 +397,7 @@ function consultaMedidaVista(): string
 
 /*
  * --------------------
- * Diseño lógico: fila: MedidaVistaBD --> normalizarMedidaVista() --> medida: MedidaVista
+ * Diseño lógico: fila: MedidaVista --> normalizarMedidaVista() --> medida: MedidaVista
  * Descripción: convierte a N/Z los campos numéricos que MariaDB entrega como texto.
  * --------------------
  */

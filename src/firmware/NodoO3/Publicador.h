@@ -38,7 +38,7 @@ private:
   /*
    * --------------------
    * Diseño lógico:
-   * id_medida: N, valor: Z, contador: N, tiempo_emision_ms: N --> publicar() -->
+   * id_medida: N, valor: Z, contador: N, tiempo_emision_ms: N --> publicar()
    * Descripción: codifica Major/Minor, inicia el anuncio iBeacon durante el
    * tiempo indicado y lo detiene al finalizar.
    * Precondición: 0 <= contador <= 255.
@@ -88,7 +88,7 @@ public:
 
   /*
    * --------------------
-   * Diseño lógico: Publicador() -->
+   * Diseño lógico: Publicador()
    * Descripción: construye el publicador con su emisora BLE configurada.
    * --------------------
    */
@@ -96,7 +96,7 @@ public:
 
   /*
    * --------------------
-   * Diseño lógico: encenderEmisora() -->
+   * Diseño lógico: encenderEmisora()
    * Descripción: inicializa la emisora BLE asociada al publicador.
    * --------------------
    */
@@ -107,7 +107,7 @@ public:
   /*
    * --------------------
    * Diseño lógico:
-   * valor_ppb: N, contador: N, tiempo_emision_ms: N --> publicarO3() -->
+   * valor_ppb: N, contador: N, tiempo_emision_ms: N --> publicarO3()
    * Descripción: publica una medida de O3 usando el ID lógico 14.
    * --------------------
    */
@@ -126,7 +126,7 @@ public:
   /*
    * --------------------
    * Diseño lógico:
-   * temperatura_c: Z, contador: N, tiempo_emision_ms: N --> publicarTemperatura() -->
+   * temperatura_c: Z, contador: N, tiempo_emision_ms: N --> publicarTemperatura()
    * Descripción: publica una temperatura usando el ID lógico 12.
    * --------------------
    */

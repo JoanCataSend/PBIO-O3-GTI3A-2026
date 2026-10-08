@@ -18,7 +18,7 @@ $testsCorrectos = 0;
 
 /*
  * --------------------
- * Diseño lógico: condicion: B, nombre: Text --> comprobar() -->
+ * Diseño lógico: condicion: B, nombre: Text --> comprobar()
  * Descripción: termina el proceso si una condición de prueba no se cumple.
  * --------------------
  */
@@ -39,7 +39,7 @@ function comprobar(bool $condicion, string $nombre): void
 
 /*
  * --------------------
- * Diseño lógico: clase_esperada: Text, nombre: Text --> esperarExcepcion() -->
+ * Diseño lógico: clase_esperada: Text, nombre: Text --> esperarExcepcion()
  * Descripción: verifica que una operación rechazada lance la excepción esperada.
  * --------------------
  */

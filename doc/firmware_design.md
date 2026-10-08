@@ -6,17 +6,16 @@
 **Implementación:** `src/firmware/`  
 **Lenguaje:** C++ para Arduino / Adafruit nRF52.
 
-Este diseño recoge la arquitectura obtenida por ingeniería inversa del firmware proporcionado y su adaptación al Sprint 0. Se mantiene la separación entre adquisición, traducción al protocolo y radio BLE.
+Este diseño recoge la arquitectura lógica del firmware del Sprint 0: adquisición ficticia, codificación del protocolo y publicación BLE se mantienen separadas.
 
 ### Tipos lógicos
 
 ```text
 UUIDProyecto = [N]_16
-
 MedicionId = { TEMPERATURA, O3 }
 ```
 
-Constantes de protocolo:
+Constantes del Sprint 0:
 
 ```text
 UUID_PROYECTO = "EPSG-GTI-PROY-3A"
@@ -34,11 +33,9 @@ NodoO3.ino
    +--> Medidor
    |
    +--> Publicador
-           |
-           +--> EmisoraBLE
+            |
+            +--> EmisoraBLE
 ```
-
-`NodoO3.ino` coordina el ciclo. `Medidor` produce las medidas ficticias. `Publicador` codifica Major/Minor. `EmisoraBLE` es la única clase que conoce Bluefruit y el advertising.
 
 ### Clase `Medidor`
 
@@ -48,19 +45,21 @@ No mantiene estado de dominio.
                  -------- Medidor --------
                  |
                  |
-              --> Medidor() -->
+                 Medidor() -->
                  |
                  |
-              --> iniciarMedidor() -->
+                 iniciarMedidor() -->
                  |
                  |
-valor_o3: N  <-- medirO3() -->
+valor_o3: N   <-- medirO3() -->
                  |
                  |
 temperatura: Z <-- medirTemperatura() -->
                  |
                  -------------------------
 ```
+
+El lado derecho usa `-->` porque estas operaciones realizan efectos externos por puerto serie.
 
 Contratos:
 
@@ -69,7 +68,7 @@ medirO3() --> valor_o3: N
 medirTemperatura() --> temperatura: Z
 ```
 
-Postcondiciones Sprint 0:
+Postcondiciones del Sprint 0:
 
 ```text
 valor_o3 = 123
@@ -87,8 +86,7 @@ potencia_radio: Z
 ```
 
 ```text
-                      ----------- EmisoraBLE -----------
-                      |
+                      -------- EmisoraBLE --------
                       | nombre: Text
                       | fabricante_id: N
                       | potencia_radio: Z
@@ -98,7 +96,7 @@ fabricante: N,        |
 tx_power: Z       --> EmisoraBLE() -->
                       |
                       |
-                   --> encenderEmisora() -->
+                      encenderEmisora() -->
                       |
                       |
 uuid: [N]_16,         |
@@ -107,9 +105,9 @@ minor: N,             |
 rssi_1m: Z        --> emitirAnuncioIBeacon() -->
                       |
                       |
-                   --> detenerAnuncio() -->
+                      detenerAnuncio() -->
                       |
-                      ----------------------------------
+                      ----------------------------
 ```
 
 ### Clase `Publicador`
@@ -122,23 +120,22 @@ la_emisora: EmisoraBLE
 rssi_1m: Z
 ```
 
-El método privado `publicar()` queda encapsulado y es reutilizado por las dos operaciones públicas.
-
 ```text
-                         ------------ Publicador ------------
-                         |
+                         -------- Publicador --------
                          | beacon_uuid: [N]_16
                          | la_emisora: EmisoraBLE
                          | rssi_1m: Z
                          |
-                         | id_medida: N, valor: Z,
-                         | contador: N, tiempo_emision_ms: N
-                         | --> publicar() -->
+id_medida: N,           |
+valor: Z,               |
+contador: N,            |
+tiempo_emision_ms: N --> publicar() -->
                          |
-                      --> Publicador() -->
+                         |
+                         Publicador() -->
                          |
                          |
-                      --> encenderEmisora() -->
+                         encenderEmisora() -->
                          |
                          |
 valor_ppb: N,           |
@@ -150,7 +147,7 @@ temperatura_c: Z,       |
 contador: N,            |
 tiempo_emision_ms: N --> publicarTemperatura() -->
                          |
-                         -------------------------------------
+                         -----------------------------
 ```
 
 Algoritmo lógico de `publicar()`:
@@ -166,8 +163,8 @@ detenerAnuncio()
 ### Programa principal
 
 ```text
-setup() -->
-loop() -->
+setup()
+loop()
 ```
 
 `setup()`:
@@ -192,16 +189,15 @@ esperar 1500
 
 ## Aclaraciones del Diseño
 
-- Los identificadores del código C++ pueden usar `camelCase`; en el diseño lógico se expresan como variables minúsculas con guion bajo, tal como exige la notación oficial.
-- El Sprint 0 **no lee ADC ni sensor físico**: las medidas son constantes y editables en `Medidor.h` para la demostración presencial.
-- `Major` reserva 8 bits para el tipo y 8 para el contador: `major = (id_medida << 8) OR contador`.
-- `Minor` transporta los 16 bits del valor. O3 se interpreta sin signo y temperatura en complemento a dos.
-- Solo se conservan los IDs realmente publicados en este Sprint (`12` y `14`); no se mantienen tipos sin uso.
-- La radio BLE está encapsulada en `EmisoraBLE`; `Medidor` no conoce BLE y `NodoO3.ino` no construye tramas.
+- El diseño lógico usa variables en minúsculas con guion bajo; los identificadores C++ pueden conservar `camelCase`.
+- El Sprint 0 usa medidas ficticias editables en `Medidor.h` para la prueba extremo a extremo.
+- `Major` reserva 8 bits para el tipo y 8 para el contador; `Minor` transporta los 16 bits del valor.
+- Solo se conservan los IDs realmente emitidos: 12 y 14.
+- `EmisoraBLE` encapsula Bluefruit; `Medidor` no conoce BLE y `NodoO3.ino` no construye tramas.
 
 ## Reglas Generales
 
 - **Lenguaje de Programación:** C++ para Arduino con Bluefruit52Lib.
-- **Encabezados de Funciones/Métodos:** cada función o método debe incluir su diseño lógico dentro de un bloque delimitado por líneas `--------------------` y una breve descripción.
-- **Legibilidad del Código:** nombres semánticos y responsabilidades segregadas; evitar comentarios que repitan literalmente el código.
-- **Pruebas Automatizadas:** `src/firmware/tests/firmware_contract_test.py` comprueba IDs, valores ficticios, UUID y empaquetado Major; la recepción BLE se valida además en Android y en la prueba presencial.
+- **Encabezados de Funciones/Métodos:** cada función o método propio debe incluir su diseño lógico dentro de `--------------------` y una breve descripción.
+- **Legibilidad del Código:** mantener responsabilidades segregadas y nombres semánticos.
+- **Pruebas Automatizadas:** `src/firmware/tests/firmware_contract_test.py` verifica IDs, valores ficticios, UUID y empaquetado de Major; el flujo BLE se valida además en la prueba presencial.

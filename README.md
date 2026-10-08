@@ -1,33 +1,51 @@
 # PBIO · Sprint 0 · Joan Catala Sendra
 
-Sprint 0 individual de **Proyecto de Aplicaciones de Biometría y Medio Ambiente (PBIO)**. El objetivo es demostrar una arquitectura completa en la que una medida ficticia generada por un nodo nRF52840 viaja por BLE/iBeacon a Android, se almacena mediante una API REST y lógica de negocio en MariaDB, y finalmente se consulta desde una página web.
+Sprint 0 individual de **Proyecto de Aplicaciones de Biometría y Medio Ambiente (PBIO)**. El objetivo es demostrar un recorrido extremo a extremo reproducible: una medida ficticia generada por el nodo nRF52840 se publica como iBeacon, Android la recibe, la lógica de negocio del cliente la envía al backend, la lógica de negocio del servidor la persiste en MariaDB y una GUI web vuelve a consultarla.
 
-## Criterio de aceptación
-
-La demostración debe conservar el mismo valor de principio a fin:
+## Criterio de aceptación obligatorio
 
 ```text
 Firmware nRF52840
    ↓ iBeacon
-Android (Java)
+Android GUI/BLE
+   ↓
+frontend_business_logic (proxy Android)
    ↓ HTTPS / JSON
-API REST (PHP)
+communication (PHP)
    ↓
-Lógica de negocio (PHP)
+business_logic (PHP)
    ↓
-MariaDB
+database (MariaDB)
    ↑
-Web (HTML/CSS/JS)
+frontend_business_logic (proxy web)
+   ↑
+GUI web
 ```
 
-El firmware de Sprint 0 usa por defecto:
+El firmware usa por defecto:
 
 ```text
 O3 = 123 ppb
 Temperatura = -12 °C
 ```
 
-Para la defensa, puede modificarse uno de esos valores en `src/firmware/NodoO3/Medidor.h`; el valor nuevo debe verse en Android y después en la web tras ser almacenado por el backend.
+Para la defensa puede modificarse uno de esos valores en `src/firmware/NodoO3/Medidor.h`. El mismo valor debe verse en Android y después en la GUI web una vez almacenado.
+
+## Arquitectura exigida por el agente revisor v2
+
+La revisión v2 exige separar explícitamente el backend en la tríada:
+
+```text
+communication -> business_logic -> database
+```
+
+También exige que toda GUI invoque un componente separado de lógica de negocio del cliente. Por eso el repositorio incluye:
+
+```text
+frontend_business_logic
+```
+
+La interfaz pública de ese proxy utiliza **las mismas firmas lógicas** que el subconjunto correspondiente de `business_logic`. Los mecanismos HTTP, `fetch`, JSON, callbacks y URLs quedan encapsulados debajo de esa interfaz.
 
 ## Estructura del repositorio
 
@@ -39,43 +57,46 @@ Para la defensa, puede modificarse uno de esos valores en `src/firmware/NodoO3/M
 ├── doc/
 │   ├── firmware_design.md
 │   ├── android_design.md
-│   ├── database_design.md
+│   ├── communication_design.md
 │   ├── business_logic_design.md
-│   ├── api_rest_design.md
-│   ├── web_design.md
-│   ├── prompts/              # exactamente los 6 prompts de la segunda tarea
-│   ├── evidencias/
-│   └── acceptance_test.md
+│   ├── database_design.md
+│   ├── frontend_business_logic_design.md
+│   ├── gui_design.md
+│   ├── acceptance_test.md
+│   ├── ai_traceability.md
+│   ├── prompts/
+│   └── evidencias/
 ├── src/
 │   ├── firmware/
 │   ├── android/
-│   ├── database/
+│   ├── communication/
 │   ├── business_logic/
-│   ├── api_rest/
-│   └── web/
+│   ├── database/
+│   ├── frontend_business_logic/
+│   └── gui/
 └── scripts/
     ├── audit-repository.py
-    └── test-sprint0.ps1
+    ├── test-sprint0.ps1
+    └── build-plesk-package.ps1
 ```
 
-`src/` es la única implementación. Cada `doc/xxx_design.md` tiene exactamente un `src/xxx/` correspondiente, evitando copias duplicadas y ambigüedad para el profesor o el agente.
+Cada `doc/xxx_design.md` corresponde a `src/xxx/`. No se mantienen copias paralelas de implementación dentro del repositorio.
 
-## Arquitectura y responsabilidades
+## Responsabilidades
 
-- **firmware**: `Medidor` produce la medida ficticia; `Publicador` traduce tipo/contador/valor a Major/Minor; `EmisoraBLE` encapsula Bluefruit.
-- **android**: `MainActivity` coordina BLE/UI; `TramaIBeacon` analiza el anuncio; `Utilidades` convierte bytes; `LogicaFake` representa la interfaz remota de negocio; `PeticionarioREST` encapsula HTTP.
-- **database**: tres tablas normalizadas: `Dispositivo`, `TipoMedida` y `Medida`.
-- **business_logic**: única capa que valida dominio y accede a MariaDB. No conoce HTTP ni HTML.
-- **api_rest**: adaptador HTTP/JSON; traduce peticiones y excepciones, sin contener SQL ni reglas de negocio.
-- **web**: `LogicaFake.js` es la única capa que usa `fetch`; `app.js` controla presentación y UX.
+- **firmware:** genera O3/temperatura ficticios y los publica en iBeacon.
+- **android:** GUI móvil, permisos, escaneo BLE, decodificación de iBeacon y coordinación de dominio.
+- **frontend_business_logic:** proxy/fake consumido por Android y por la GUI web; encapsula comunicación remota.
+- **communication:** punto de entrada HTTP/JSON; decodifica, despacha y traduce errores de protocolo.
+- **business_logic:** validación de dominio, consultas y persistencia; no depende de la capa de comunicación.
+- **database:** esquema relacional MariaDB con `Dispositivo`, `TipoMedida` y `Medida`.
+- **gui:** presentación web; no contiene `fetch` ni rutas de servidor.
 
-Los diseños formales están en `doc/` y usan la notación oficial de la asignatura.
-
-## Protocolo BLE del Sprint 0
+## Protocolo BLE
 
 ```text
 Nombre BLE: GTI Joan
-UUID iBeacon: EPSG-GTI-PROY-3A   (16 bytes ASCII)
+UUID iBeacon: EPSG-GTI-PROY-3A  (16 bytes ASCII)
 Manufacturer ID: 0x004C
 ID Temperatura: 12
 ID O3: 14
@@ -98,38 +119,34 @@ Android Gradle Plugin: 7.3.0
 Gradle wrapper: 7.4
 ```
 
-La URL configurada para el Sprint 0 es:
+La URL de Sprint 0 se encuentra encapsulada en la implementación Android de `frontend_business_logic`:
 
 ```text
 https://jcatsen.upv.edu.es/biometria/api.php
 ```
 
-La recepción BLE debe validarse con un dispositivo físico compatible con BLE. Un emulador puede no entregar anuncios Bluetooth reales.
+`src/android/app/build.gradle` añade los fuentes Java de `src/frontend_business_logic/android/` mediante `sourceSets`. Esto permite mantener los componentes separados en el repositorio sin duplicar clases y sin cambiar el package de la aplicación.
+
+La recepción BLE debe validarse en un dispositivo físico compatible con BLE.
 
 ## Base de datos
 
-Motor: MariaDB/InnoDB. Esquema: `src/database/schema.sql`.
+Motor: MariaDB/InnoDB.
 
-El modelo contiene únicamente tres tablas porque es el mínimo normalizado que evita repetir metadatos en cada medida:
+El diseño formal de tablas está en `doc/database_design.md` y sigue el formato `TABLE / DESCRIPTION / COLUMNS / PRIMARY KEY / FOREIGN KEYS / CONSTRAINTS` requerido por el agente v2.
 
-```text
-Dispositivo 1 ─── N Medida N ─── 1 TipoMedida
-```
-
-La semilla `src/database/seed.sql` registra solo el dispositivo del Sprint 0 y los tipos realmente emitidos: Temperatura (12) y O3 (14).
-
-Inicialización típica en MariaDB:
+Inicialización:
 
 ```bash
 mysql -u USUARIO -p NOMBRE_BD < src/database/schema.sql
 mysql -u USUARIO -p NOMBRE_BD < src/database/seed.sql
 ```
 
-`drop.sql` permite eliminar las tablas en orden seguro durante una reinstalación controlada.
+`drop.sql` elimina las tablas en orden seguro para una reinstalación controlada.
 
-## Backend y credenciales
+## Configuración privada del backend
 
-La configuración privada **no se versiona**. Para ejecutar el backend, copie:
+Las credenciales nunca se versionan. Copie:
 
 ```text
 src/business_logic/SDBaseDatos.example.php
@@ -141,89 +158,105 @@ como:
 src/business_logic/SDBaseDatos.php
 ```
 
-y configure host, base, usuario y contraseña. El archivo real está excluido por `.gitignore`.
+para un entorno local, o configure el equivalente privado al desplegar.
 
-En el repositorio, `api.php` puede cargar `../business_logic/Logica.php`. Para un despliegue Plesk sencillo, la estructura pública recomendada es:
+`.gitignore` excluye el archivo real.
+
+## Cómo desplegar en Plesk
+
+La estructura del repositorio está optimizada para la auditoría arquitectónica y no duplica código. Para generar una carpeta de despliegue plana compatible con Plesk:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\build-plesk-package.ps1
+```
+
+Se genera:
 
 ```text
-biometria/
+.dist/plesk/biometria/
 ├── index.html
 ├── css/
 ├── js/
+│   ├── app.js
+│   └── LogicaFake.js
 ├── api.php
 └── server/
     ├── Logica.php
-    └── SDBaseDatos.php   # privado; nunca subir a Git
+    └── SDBaseDatos.example.php
 ```
 
-Los scripts SQL no necesitan quedar dentro del directorio público una vez inicializada la base.
+Antes de usarlo en el servidor debe crearse **solo en Plesk** `server/SDBaseDatos.php` con las credenciales reales. No se debe añadir ese archivo a Git.
+
+Los SQL se importan desde `src/database/` y no necesitan permanecer en el directorio público.
 
 ## Tests automáticos
 
-Desde la raíz pueden ejecutarse por separado:
+Desde la raíz:
 
-```bash
-python scripts/audit-repository.py
-python src/firmware/tests/firmware_contract_test.py
-python src/database/tests/schema_contract_test.py
-php src/business_logic/tests/LogicaUnitTest.php
-node src/web/tests/web_unit_test.js
+```powershell
+python scripts\audit-repository.py
+python src\firmware\tests\firmware_contract_test.py
+python src\database\tests\schema_contract_test.py
+node src\frontend_business_logic\tests\web_proxy_test.js
+node src\gui\tests\gui_unit_test.js
 ```
+
+Con PHP disponible:
+
+```powershell
+php src\business_logic\tests\LogicaUnitTest.php
+php src\communication\tests\ApiIntegracionTest.php
+```
+
+El test de `communication` ejecuta siempre un contrato **offline y reproducible**. Para añadir la integración contra un despliegue real:
+
+```powershell
+$env:PBIO_API_URL="https://jcatsen.upv.edu.es/biometria/api.php"
+php src\communication\tests\ApiIntegracionTest.php
+```
+
+La escritura real continúa desactivada por defecto; solo se habilita con `PBIO_API_WRITE_TEST=1`.
 
 Android:
 
-```text
-cd src/android
-# Windows
-gradlew.bat test
-# Linux/macOS
-./gradlew test
+```powershell
+cd src\android
+.\gradlew.bat test
+cd ..\..
 ```
 
-Test instrumentado con teléfono/emulador conectado:
+Test instrumentado:
 
-```text
-gradlew.bat connectedAndroidTest
+```powershell
+cd src\android
+.\gradlew.bat connectedAndroidTest
 ```
 
-Integración contra un servidor desplegado:
+También puede ejecutarse el lanzador conjunto:
 
-```bash
-php src/api_rest/tests/ApiIntegracionTest.php
+```powershell
+.\scripts\test-sprint0.ps1
 ```
 
-Puede sobrescribirse la URL mediante `PBIO_API_URL`. Por defecto el test comprueba lecturas y respuestas de error sin insertar filas. Para incluir también un POST válido que escribe una medida de prueba real:
+## Criterios de aceptación por entregable
 
-```bash
-# PowerShell
-$env:PBIO_API_WRITE_TEST="1"
-php src/api_rest/tests/ApiIntegracionTest.php
-Remove-Item Env:PBIO_API_WRITE_TEST
-```
+`doc/acceptance_test.md` contiene una matriz reproducible para firmware, Android, proxy de frontend, comunicación, lógica de negocio, base de datos y GUI. El test presencial extremo a extremo sigue siendo obligatorio.
 
-Este test necesita red y un backend operativo; por ello se mantiene separado de los tests puramente locales.
+## IA y trazabilidad
 
-En Windows, `scripts/test-sprint0.ps1` agrupa los tests locales y permite activar opcionalmente la integración remota.
+Los seis prompts de trabajo se mantienen en `doc/prompts/`. `doc/ai_traceability.md` relaciona cada prompt, diseño e implementación para demostrar el flujo diseño -> prompt -> código -> revisión.
 
-## Demostración presencial
+## Buenas prácticas Git
 
-La secuencia recomendada está detallada en `doc/acceptance_test.md`. En resumen:
+Se mantienen las ramas `develop`, `master` y `main`. Los cambios funcionales deben integrarse mediante commits identificables y el árbol de trabajo debe quedar limpio antes de la entrega.
 
-1. cambiar el valor ficticio de O3 o temperatura en `Medidor.h`;
-2. compilar y cargar el firmware;
-3. abrir Monitor Serie y comprobar el valor;
-4. abrir la app Android en un teléfono físico, iniciar búsqueda y comprobar recepción + “Servidor: medida guardada”;
-5. abrir la web, actualizar y comprobar que aparece el mismo valor;
-6. si se solicita, mostrar la fila correspondiente en MariaDB/API.
+## Nota de seguridad
 
-## Git y entrega
+Nunca subir:
 
-La rúbrica exige un repositorio Git con ramas **`develop` y `master`** y commits periódicos. Esa historia no debe fabricarse dentro de un ZIP: debe conservarse en el repositorio real de GitHub. Antes de entregar, verificar que ambas ramas existan y que la versión final corregida esté committeada.
-
-## Uso de IA y trazabilidad
-
-`doc/prompts/` contiene exactamente los seis prompts solicitados: base de datos, lógica de negocio, API REST, lógica fake Android, lógica fake navegador y UX navegador. Cada prompt parte del diseño previo, exige cabeceras en la notación oficial y solicita tests automáticos. La implementación final debe revisarse siempre contra `doc/*_design.md`; los prompts no sustituyen el criterio de diseño.
-
-## Evidencias
-
-`doc/evidencias/` contiene capturas de una ejecución previa con los valores ficticios del Sprint 0. Son apoyo documental, no sustituyen el test presencial exigido por la rúbrica.
+- `SDBaseDatos.php` real;
+- contraseñas o tokens;
+- `local.properties`;
+- carpetas `build/` o `.gradle/`;
+- artefactos `.dist/` generados para despliegue.

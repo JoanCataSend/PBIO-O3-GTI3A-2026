@@ -21,7 +21,7 @@ namespace Globales {
 
 /*
  * --------------------
- * Diseño lógico: setup() -->
+ * Diseño lógico: setup()
  * Descripción: inicializa el puerto serie, el medidor ficticio y la emisora BLE.
  * --------------------
  */
@@ -45,7 +45,7 @@ void setup() {
 
 /*
  * --------------------
- * Diseño lógico: loop() -->
+ * Diseño lógico: loop()
  * Descripción: genera un contador, obtiene O3 y temperatura ficticios y los
  * publica secuencialmente mediante iBeacon.
  * Precondición: setup() ha finalizado correctamente.

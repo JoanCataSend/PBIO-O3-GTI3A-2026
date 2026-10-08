@@ -33,6 +33,14 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    // La GUI Android permanece en src/android, mientras que la lógica de
+    // negocio del cliente se mantiene en su componente propio para cumplir
+    // la arquitectura exigida por el agente revisor v2.
+    sourceSets {
+        main.java.srcDir project.file('../../frontend_business_logic/android/main/java')
+        test.java.srcDir project.file('../../frontend_business_logic/android/test/java')
+    }
 }
 
 dependencies {

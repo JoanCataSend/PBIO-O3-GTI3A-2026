@@ -23,7 +23,7 @@ public class AppInstrumentedTest {
 
     /**
      * --------------------
-     * Diseño lógico: paqueteDeLaAplicacionEsElEsperado() -->
+     * Diseño lógico: paqueteDeLaAplicacionEsElEsperado()
      * Descripción: prueba automáticamente el criterio indicado.
      * Criterio: el package desplegado debe ser es.upv.jcatsen.pbio.
      * --------------------

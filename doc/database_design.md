@@ -6,88 +6,116 @@
 **Implementación:** `src/database/`  
 **Motor:** MariaDB / InnoDB.
 
-Se usa un modelo relacional de **tres tablas**. Es el mínimo que evita duplicar metadatos de dispositivo y de tipo en cada medida y mantiene integridad referencial sin sobrediseñar el Sprint 0.
-
-### Modelo relacional
+El diseño sigue literalmente el formato exigido por `Database_Design_Spec.md`: `TABLE`, `DESCRIPTION`, `COLUMNS`, `PRIMARY KEY`, `FOREIGN KEYS` y `CONSTRAINTS`.
 
 ```text
-Dispositivo(
-    dispositivo_id: N PK AUTOINCREMENT,
-    uuid: Text UNIQUE NOT NULL,
-    nombre: Text NOT NULL
-)
+====================================================================================
+TABLE: Dispositivo
 
-TipoMedida(
-    tipo_medida_id: N PK,
-    nombre: Text UNIQUE NOT NULL,
-    unidad: Text NOT NULL
-)
+DESCRIPTION: Stores each physical PBIO node known by the system.
 
-Medida(
-    medida_id: N PK AUTOINCREMENT,
-    dispositivo_id: N FK -> Dispositivo.dispositivo_id,
-    tipo_medida_id: N FK -> TipoMedida.tipo_medida_id,
-    valor: Z NOT NULL,
-    contador: N NOT NULL,
-    rssi: Z NOT NULL,
-    fecha_hora: Text NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
-)
+COLUMNS:
+
++ dispositivoId | INT UNSIGNED | NOT NULL | AUTO_INCREMENT
++ uuid | CHAR(16) | NOT NULL | NO DEFAULT
++ nombre | VARCHAR(100) | NOT NULL | NO DEFAULT
+
+PRIMARY KEY: dispositivoId
+
+FOREIGN KEYS:
+
++ None
+
+CONSTRAINTS:
+
++ UNIQUE (uuid)
++ CHECK (CHAR_LENGTH(uuid) = 16)
+====================================================================================
+
+====================================================================================
+TABLE: TipoMedida
+
+DESCRIPTION: Stores the catalogue of measurement types emitted by the node.
+
+COLUMNS:
+
++ tipoMedidaId | TINYINT UNSIGNED | NOT NULL | NO DEFAULT
++ nombre | VARCHAR(50) | NOT NULL | NO DEFAULT
++ unidad | VARCHAR(20) | NOT NULL | NO DEFAULT
+
+PRIMARY KEY: tipoMedidaId
+
+FOREIGN KEYS:
+
++ None
+
+CONSTRAINTS:
+
++ UNIQUE (nombre)
+====================================================================================
+
+====================================================================================
+TABLE: Medida
+
+DESCRIPTION: Stores each measurement received from a registered device.
+
+COLUMNS:
+
++ medidaId | BIGINT UNSIGNED | NOT NULL | AUTO_INCREMENT
++ dispositivoId | INT UNSIGNED | NOT NULL | NO DEFAULT
++ tipoMedidaId | TINYINT UNSIGNED | NOT NULL | NO DEFAULT
++ valor | INT | NOT NULL | NO DEFAULT
++ contador | TINYINT UNSIGNED | NOT NULL | NO DEFAULT
++ rssi | SMALLINT | NOT NULL | NO DEFAULT
++ fechaHora | DATETIME(3) | NOT NULL | CURRENT_TIMESTAMP(3)
+
+PRIMARY KEY: medidaId
+
+FOREIGN KEYS:
+
++ dispositivoId -> Dispositivo(dispositivoId)
++ tipoMedidaId -> TipoMedida(tipoMedidaId)
+
+CONSTRAINTS:
+
++ CHECK (contador BETWEEN 0 AND 255)
++ CHECK (valor BETWEEN -32768 AND 65535)
++ ON UPDATE CASCADE / ON DELETE RESTRICT for both foreign keys
++ INDEX (dispositivoId, tipoMedidaId, fechaHora, medidaId)
++ INDEX (tipoMedidaId, fechaHora, medidaId)
+====================================================================================
 ```
 
-### Cardinalidades
+### Relaciones
 
 ```text
 Dispositivo 1 ---- N Medida
 TipoMedida  1 ---- N Medida
 ```
 
-### Restricciones
-
-```text
-Dispositivo.uuid es único y tiene 16 caracteres
-0 <= TipoMedida.tipo_medida_id <= 255
--32768 <= Medida.valor <= 65535
-0 <= Medida.contador <= 255
-FK Medida.dispositivo_id -> Dispositivo.dispositivo_id
-FK Medida.tipo_medida_id -> TipoMedida.tipo_medida_id
-```
-
-### Índices
-
-```text
-UNIQUE Dispositivo(uuid)
-UNIQUE TipoMedida(nombre)
-INDEX Medida(dispositivo_id, tipo_medida_id, fecha_hora, medida_id)
-INDEX Medida(tipo_medida_id, fecha_hora, medida_id)
-```
-
-El primer índice soporta la consulta de última medida y filtros por dispositivo; el segundo evita degradar las consultas por tipo cuando no se selecciona dispositivo.
-
 ### Datos iniciales del Sprint 0
 
 ```text
 Dispositivo:
-    "EPSG-GTI-PROY-3A" / "GTI Joan"
+    uuid = "EPSG-GTI-PROY-3A"
+    nombre = "GTI Joan"
 
-Tipos:
+TipoMedida:
     12 / "Temperatura" / "°C"
     14 / "O3" / "ppb"
 ```
 
-No se insertan CO2 ni Ruido porque el firmware final no los publica.
-
 ## Aclaraciones del Diseño
 
-- La notación lógica usa `dispositivo_id`, `tipo_medida_id`, `medida_id` y `fecha_hora`; el esquema SQL implementado conserva los nombres `dispositivoId`, `tipoMedidaId`, `medidaId` y `fechaHora`. La correspondencia es uno-a-uno.
-- No se usa una tabla adicional de unidades: `unidad` depende del tipo y separar esa única cadena añadiría complejidad sin beneficio.
-- No se guarda `uuid`, nombre de dispositivo ni unidad repetidos dentro de `Medida`; se recuperan con `JOIN`.
-- `rssi` se almacena como metadato de recepción porque lo produce Android y es útil para diagnóstico, pero no constituye un tipo de medida ambiental independiente.
-- `fecha_hora` la crea MariaDB para tener una referencia temporal única del servidor.
-- No se hace `UNIQUE` sobre contador porque el contador es de 8 bits y vuelve a cero; una combinación válida puede repetirse con el tiempo.
+- El esquema SQL conserva `camelCase` porque esos son los identificadores físicos de las columnas implementadas; la lógica abstracta usa nombres de variable en minúsculas con guion bajo.
+- `Dispositivo`, `TipoMedida` y `Medida` son las únicas tablas necesarias para el Sprint 0; separar unidades en una cuarta tabla no aporta información adicional.
+- `rssi` se guarda como metadato de recepción de cada medida.
+- `fechaHora` la genera MariaDB, evitando depender del reloj del teléfono.
+- El contador no es único: usa 8 bits y puede repetirse después de desbordar.
 
 ## Reglas Generales
 
 - **Lenguaje de Programación:** SQL compatible con MariaDB/InnoDB.
-- **Encabezados de Funciones/Métodos:** este componente no define funciones de aplicación; cada script SQL sí debe tener cabecera de archivo con nombre, descripción, copyright, fecha, autor y aportación.
-- **Legibilidad del Código:** restricciones, claves foráneas e índices deben estar nombrados y reflejar el diseño anterior.
-- **Pruebas Automatizadas:** `src/database/tests/schema_contract_test.py` comprueba estructura, restricciones, índices y semilla mínima; la integración real se comprueba mediante la API.
+- **Encabezados de Funciones/Métodos:** este componente no contiene funciones de aplicación; cada script SQL debe mantener cabecera de archivo con nombre, descripción, copyright, fecha, autor y aportación.
+- **Legibilidad del Código:** tablas, claves, `CHECK`, claves foráneas e índices deben corresponder exactamente con este diseño.
+- **Pruebas Automatizadas:** `src/database/tests/schema_contract_test.py` verifica tablas, columnas, restricciones, índices y semilla mínima.

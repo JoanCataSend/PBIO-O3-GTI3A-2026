@@ -19,7 +19,7 @@ public:
 
   /*
    * --------------------
-   * Diseño lógico: Medidor() -->
+   * Diseño lógico: Medidor()
    * Descripción: construye el medidor ficticio. No inicializa hardware.
    * --------------------
    */
@@ -28,7 +28,7 @@ public:
 
   /*
    * --------------------
-   * Diseño lógico: iniciarMedidor() -->
+   * Diseño lógico: iniciarMedidor()
    * Descripción: informa por puerto serie de los valores ficticios usados.
    * --------------------
    */

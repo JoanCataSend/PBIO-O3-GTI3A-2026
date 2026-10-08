@@ -1,16 +1,15 @@
 # Documentación de diseño
 
-Esta carpeta contiene las especificaciones que el agente de revisión debe comparar con `src/`.
+Los documentos `*_design.md` son la especificación formal que el agente revisor compara con `src/`.
 
-| Diseño | Implementación |
-|---|---|
-| `firmware_design.md` | `src/firmware/` |
-| `android_design.md` | `src/android/` |
-| `database_design.md` | `src/database/` |
-| `business_logic_design.md` | `src/business_logic/` |
-| `api_rest_design.md` | `src/api_rest/` |
-| `web_design.md` | `src/web/` |
+| Diseño | Implementación | Responsabilidad |
+|---|---|---|
+| `firmware_design.md` | `src/firmware/` | adquisición ficticia y BLE |
+| `android_design.md` | `src/android/` | GUI móvil y recepción BLE |
+| `communication_design.md` | `src/communication/` | entrada HTTP/JSON del backend |
+| `business_logic_design.md` | `src/business_logic/` | dominio y persistencia |
+| `database_design.md` | `src/database/` | esquema relacional |
+| `frontend_business_logic_design.md` | `src/frontend_business_logic/` | proxy/fake de dominio para las GUI |
+| `gui_design.md` | `src/gui/` | GUI web |
 
-Todos los `xxx_design.md` incluyen las secciones exigidas por `AGENTES_es.pdf`: **Diseño del Componente**, **Aclaraciones del Diseño** y **Reglas Generales**. La notación empleada es la de `Logical Design & Reverse Engineering Specification v3`: `N`, `Z`, `R`, `B`, `Text`, agregaciones, listas y firmas lógicas independientes del lenguaje.
-
-`prompts/` contiene exactamente las seis especificaciones solicitadas en la segunda tarea. `evidencias/` conserva capturas de una ejecución previa, `acceptance_test.md` describe la demostración presencial reproducible y `ai_traceability.md` documenta la relación diseño → prompt → implementación → revisión.
+Todos los diseños contienen las secciones **Diseño del Componente**, **Aclaraciones del Diseño** y **Reglas Generales**. La base de datos usa además el formato estricto de tablas exigido por `Database_Design_Spec.md`.

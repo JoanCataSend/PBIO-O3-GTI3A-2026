@@ -1,16 +1,16 @@
-# Código fuente
+# Implementación
 
-`src/` es la **única fuente de verdad** de la implementación del Sprint 0. No existe una segunda copia «operativa» del código en la raíz.
+`src/` contiene una única implementación por componente lógico:
 
-Cada subcarpeta corresponde uno-a-uno con un diseño `doc/xxx_design.md`, tal como exige el agente de revisión:
+```text
+communication -> business_logic -> database
 
-| Diseño | Implementación |
-|---|---|
-| `doc/firmware_design.md` | `src/firmware/` |
-| `doc/android_design.md` | `src/android/` |
-| `doc/database_design.md` | `src/database/` |
-| `doc/business_logic_design.md` | `src/business_logic/` |
-| `doc/api_rest_design.md` | `src/api_rest/` |
-| `doc/web_design.md` | `src/web/` |
+android -> frontend_business_logic -> communication
+gui     -> frontend_business_logic -> communication
 
-Los tests de cada componente están junto a su implementación cuando procede.
+firmware -> Android por BLE (frontera física)
+```
+
+La carpeta `frontend_business_logic/` contiene dos implementaciones del mismo contrato lógico: Java para Android y JavaScript para la GUI web. Ambas exponen únicamente el subconjunto de operaciones de `business_logic` que necesita cada cliente.
+
+No introducir copias de `communication`, `business_logic` o del proxy dentro de las carpetas GUI. Los paquetes de despliegue se generan con scripts y se mantienen fuera de Git.

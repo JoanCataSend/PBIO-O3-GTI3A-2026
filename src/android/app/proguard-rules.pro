@@ -1,21 +1,8 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Archivo: proguard-rules.pro
+# Descripción: reglas ProGuard/R8 específicas del módulo Android PBIO.
+# Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
+# Fecha: 2026-10-07
+# Autor: Joan Catala Sendra
+# Aportación: configuración mínima; Sprint 0 no requiere reglas personalizadas.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
-
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# No hay reglas adicionales en Sprint 0.

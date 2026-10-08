@@ -100,25 +100,37 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * --------------------
-     * Diseño lógico: comprobarServidor() --> estado: Text
-     * Descripción: comprueba desde el propio teléfono que la API REST es accesible.
+     * Diseño lógico: comprobarServidor()
+     * Descripción: solicita probarConexion a la lógica de negocio del cliente y actualiza la UI.
      * --------------------
      */
     private void comprobarServidor() {
         textoServidor.setText("Servidor: comprobando conexión...");
 
-        LogicaFake.comprobarServidor(
-                new PeticionarioREST.Callback() {
+        LogicaFake.probarConexion(
+                new LogicaFake.CallbackEstadoBD() {
+                    /**
+                     * --------------------
+                     * Diseño lógico: estado: EstadoBD --> correcto()
+                     * Descripción: refleja en la GUI que el backend está accesible.
+                     * --------------------
+                     */
                     @Override
-                    public void correcto(org.json.JSONObject respuesta) {
+                    public void correcto(EstadoBD estado) {
                         runOnUiThread(() ->
                                 textoServidor.setText("Servidor: conectado")
                         );
                     }
 
+                    /**
+                     * --------------------
+                     * Diseño lógico: mensaje: Text --> error()
+                     * Descripción: muestra en la GUI el diagnóstico devuelto por el proxy.
+                     * --------------------
+                     */
                     @Override
                     public void error(String mensaje) {
-                        Log.e(TAG, "Error health REST: " + mensaje);
+                        Log.e(TAG, "Error de conexión: " + mensaje);
                         runOnUiThread(() ->
                                 textoServidor.setText("Servidor: " + mensaje)
                         );
@@ -522,17 +534,17 @@ public class MainActivity extends AppCompatActivity {
 
         LogicaFake.insertarMedida(
                 datos,
-                new PeticionarioREST.Callback() {
+                new LogicaFake.CallbackMedidaVista() {
 
                     /**
                      * --------------------
-                     * Diseño lógico: respuesta: MedidaVista --> correcto()
+                     * Diseño lógico: medida: MedidaVista --> correcto()
                      * Descripción: confirma en la interfaz que el servidor guardó la medida.
                      * --------------------
                      */
                     @Override
                     public void correcto(
-                            org.json.JSONObject respuesta
+                            MedidaVista medida
                     ) {
 
                         runOnUiThread(() ->
@@ -565,7 +577,7 @@ public class MainActivity extends AppCompatActivity {
 
                         Log.e(
                                 TAG,
-                                "Error REST: " + mensaje
+                                "Error al guardar: " + mensaje
                         );
 
                         runOnUiThread(() ->

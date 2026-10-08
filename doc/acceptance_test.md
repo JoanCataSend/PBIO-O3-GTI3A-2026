@@ -1,52 +1,28 @@
-# Test de aceptación presencial · Sprint 0
+# Criterios de aceptación reproducibles - Sprint 0
 
-## Objetivo
+## Matriz por entregable
 
-Demostrar de forma reproducible el criterio obligatorio de la rúbrica: una medida ficticia definida en Arduino debe atravesar **firmware → BLE/iBeacon → Android → REST → lógica de negocio → MariaDB → web** y aparecer en el navegador con el mismo valor.
+| Componente | Criterio reproducible | Comprobación |
+|---|---|---|
+| firmware | publica ID O3 14, temperatura 12, Major con ID+contador y valores ficticios | `python src/firmware/tests/firmware_contract_test.py` |
+| android | decodifica UUID/Major/Minor y no contiene transporte remoto directo | `cd src/android; gradlew.bat test` + auditoría |
+| frontend_business_logic | expone las mismas firmas lógicas que el subconjunto del backend y encapsula comunicación | JUnit + `node src/frontend_business_logic/tests/web_proxy_test.js` |
+| communication | acepta las rutas definidas y delega en `business_logic` | `php src/communication/tests/ApiIntegracionTest.php` (contrato offline; `PBIO_API_URL` añade integración real) |
+| business_logic | valida dominio, consulta catálogos y persiste sin depender de `communication` | `php src/business_logic/tests/LogicaUnitTest.php` + auditoría |
+| database | esquema y semilla coinciden con el diseño formal | `python src/database/tests/schema_contract_test.py` |
+| gui | no contiene `fetch`; representa datos recibidos del proxy | `node src/gui/tests/gui_unit_test.js` |
+| repositorio | estructura y documentación cumplen agente v2 | `python scripts/audit-repository.py` |
 
-## Preparación
+## Test de funcionamiento obligatorio
 
-- SparkFun Pro nRF52840 Mini con el firmware de `src/firmware/NodoO3/`.
-- Teléfono Android físico con BLE y la app de `src/android/` instalada.
-- Backend/API y MariaDB desplegados y accesibles.
-- Navegador abierto en la web desplegada.
-- Monitor Serie a 115200 baudios.
-- Rúbrica impresa, tal como pide el enunciado.
+1. Cambiar `O3` ficticio en `src/firmware/NodoO3/Medidor.h` a un valor reconocible.
+2. Compilar y cargar el firmware.
+3. Abrir Android físico y pulsar **Buscar GTI Joan**.
+4. Verificar que Android muestra el mismo O3 y confirma que la medida fue guardada.
+5. Abrir la GUI web desplegada.
+6. Actualizar y comprobar que aparece exactamente el mismo valor.
+7. Si el valor cambia en cualquiera de las capas, el test se considera fallido.
 
-## Procedimiento reproducible
+## Evidencias
 
-1. En `src/firmware/NodoO3/Medidor.h`, cambiar `valorO3` a un valor fácil de reconocer, por ejemplo `321`.
-2. Compilar/cargar el firmware y reiniciar la placa.
-3. En Monitor Serie, comprobar `O3 = 321 ppb` y la publicación con ID 14.
-4. En Android, pulsar **Buscar GTI Joan**.
-5. Verificar que la app muestra `O₃: 321 ppb`, un contador y RSSI, y finalmente `Servidor: medida guardada`.
-6. En la web, pulsar **Actualizar** o esperar al refresco automático.
-7. Verificar que la tarjeta/tabla contiene O3 = `321 ppb` para `GTI Joan`.
-8. Si el profesor lo pide, consultar la API o MariaDB y mostrar la misma fila almacenada.
-
-## Resultado esperado
-
-```text
-valor_firmware = valor_android = valor_bbdd = valor_web
-```
-
-El test solo se considera superado si la medida nueva introducida al comienzo es la que termina mostrándose en la web.
-
-## Comprobaciones rápidas si algo falla
-
-- **No aparece BLE:** comprobar permisos, Bluetooth, nombre `GTI Joan`, UUID `EPSG-GTI-PROY-3A` y usar teléfono físico.
-- **Android recibe pero no guarda:** revisar el texto de estado del servidor, conectividad HTTPS y URL configurada en `LogicaFake.URL_API`.
-- **API devuelve error:** probar `?accion=health`, comprobar `SDBaseDatos.php` y que dispositivo/tipos 12 y 14 estén sembrados.
-- **Web no actualiza:** comprobar `api.php?accion=medidas`, consola del navegador y que `LogicaFake.js` use la ruta relativa `api.php`.
-
-## Defensa de arquitectura
-
-Si se pregunta por segregación de responsabilidades:
-
-- `Medidor` mide/genera; no conoce BLE.
-- `Publicador` codifica el protocolo; no mide.
-- `EmisoraBLE` conoce Bluefruit; no conoce negocio.
-- `MainActivity` coordina BLE/UI; HTTP queda en `PeticionarioREST` detrás de `LogicaFake`.
-- `business_logic` valida y accede a BBDD; no conoce HTTP.
-- `api_rest` adapta HTTP/JSON; no contiene SQL.
-- `LogicaFake.js` conoce REST; `app.js` conoce la interfaz.
+Las capturas de `doc/evidencias/` pueden acompañar la defensa, pero no sustituyen la ejecución presencial.
