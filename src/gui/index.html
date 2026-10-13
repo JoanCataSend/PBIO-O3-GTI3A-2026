@@ -1,10 +1,10 @@
 <!--
  Archivo: index.html
- Descripci&oacute;n: interfaz web responsive para consulta del Sprint 0 PBIO.
- Copyright: 2026 Joan Catala Sendra (uso acad&eacute;mico PBIO - UPV)
- Fecha: 2026-10-07
+ Descripción: interfaz web responsive para consulta del Sprint 0 PBIO.
+ Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
+ Fecha: 2026-10-13
  Autor: Joan Catala Sendra
- Aportaci&oacute;n: estructura sem&aacute;ntica de la interfaz web.
+ Aportación: estructura semántica de la interfaz web.
 -->
 <!doctype html>
 <html lang="es">
@@ -14,7 +14,7 @@
         name="viewport"
         content="width=device-width, initial-scale=1"
     >
-    <title>PBIO &middot; GTI Joan</title>
+    <title>PBIO · GTI Joan</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
@@ -23,7 +23,7 @@
 <header class="topbar">
     <div>
         <p class="eyebrow">PBIO</p>
-        <h1>Monitor ambiental &middot; GTI Joan</h1>
+        <h1>Monitor ambiental · GTI Joan</h1>
     </div>
 
     <div
@@ -32,7 +32,7 @@
         role="status"
         aria-live="polite"
     >
-        Conectando&hellip;
+        Conectando…
     </div>
 </header>
 
@@ -84,31 +84,31 @@
             <div class="titulo-seccion">
                 <div>
                     <p class="eyebrow">Datos</p>
-                    <h2>&Uacute;ltimas medidas</h2>
+                    <h2>Últimas medidas</h2>
                 </div>
 
                 <span id="ultimaActualizacion" aria-live="polite">
-                    &mdash;
+                    —
                 </span>
             </div>
 
             <div class="tarjetas">
 
                 <article class="tarjeta">
-                    <span>O&#8323;</span>
-                    <strong id="valorO3">&mdash;</strong>
+                    <span>O₃</span>
+                    <strong id="valorO3">—</strong>
                     <small>ppb</small>
                 </article>
 
                 <article class="tarjeta">
                     <span>Temperatura</span>
-                    <strong id="valorTemperatura">&mdash;</strong>
-                    <small>&deg;C</small>
+                    <strong id="valorTemperatura">—</strong>
+                    <small>°C</small>
                 </article>
 
                 <article class="tarjeta tarjeta-info">
-                    <span>&Uacute;ltimo RSSI</span>
-                    <strong id="valorRssi">&mdash;</strong>
+                    <span>Último RSSI</span>
+                    <strong id="valorRssi">—</strong>
                     <small>dBm</small>
                 </article>
 
@@ -118,8 +118,8 @@
         <section class="panel">
             <div class="titulo-seccion">
                 <div>
-                    <p class="eyebrow">Evoluci&oacute;n</p>
-                    <h2>Gr&aacute;fica temporal</h2>
+                    <p class="eyebrow">Evolución</p>
+                    <h2>Gráfica temporal</h2>
                 </div>
             </div>
 
@@ -145,7 +145,7 @@
                 class="sin-datos"
                 hidden
             >
-                Todav&iacute;a no hay medidas para estos filtros.
+                Todavía no hay medidas para estos filtros.
             </div>
 
             <div class="tabla-contenedor">
@@ -156,7 +156,6 @@
                         <th>Dispositivo</th>
                         <th>Tipo</th>
                         <th>Valor</th>
-                        <th>RSSI</th>
                     </tr>
                     </thead>
 

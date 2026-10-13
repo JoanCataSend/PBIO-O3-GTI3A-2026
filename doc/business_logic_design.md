@@ -20,8 +20,7 @@ MedidaEntrada = (
 )
 
 Dispositivo = (
-    dispositivo_id: N,
-    uuid: Text,
+    dispositivo_id: Text,
     nombre: Text
 )
 
@@ -32,21 +31,17 @@ TipoMedida = (
 )
 
 MedidaVista = (
-    medida_id: N,
-    dispositivo_id: N,
-    uuid: Text,
+    dispositivo_id: Text,
     dispositivo: Text,
     tipo_medida_id: N,
     tipo_medida: Text,
     unidad: Text,
     valor: Z,
-    contador: N,
-    rssi: Z,
     fecha_hora: Text
 )
 
 FiltrosMedida = (
-    dispositivo_id: N,
+    dispositivo_id: Text,
     tipo_medida_id: N,
     desde: Text,
     hasta: Text
@@ -62,7 +57,7 @@ ConexionBD = (
 )
 ```
 
-Los campos de `FiltrosMedida` son criterios opcionales: un criterio ausente en la llamada no se aplica. Esta ausencia es una condición de la operación, no un tipo adicional de la notación.
+Los campos de `FiltrosMedida` son criterios opcionales: un criterio ausente en la llamada no se aplica.
 
 ### Interfaz de lógica de negocio
 
@@ -71,15 +66,13 @@ probarConexion() --> estado: EstadoBD
 
 datos: MedidaEntrada --> insertarMedida() --> medida: MedidaVista
 
-medida_id: N --> buscarMedidaConId() --> medida: MedidaVista
-
 filtros: FiltrosMedida --> listarMedidas() --> medidas: [MedidaVista]
 
 listarDispositivos() --> dispositivos: [Dispositivo]
 
 listarTiposMedida() --> tipos: [TipoMedida]
 
-dispositivo_id: N, tipo_medida_id: N --> buscarUltimaMedida() --> medida: MedidaVista
+dispositivo_id: Text, tipo_medida_id: N --> buscarUltimaMedida() --> medida: MedidaVista
 
 datos: MedidaEntrada --> validarMedidaEntrada()
 ```
@@ -99,7 +92,6 @@ fila: MedidaVista --> normalizarMedidaVista() --> medida: MedidaVista
 ```text
 Dispositivo:
     dispositivo_id <-> Dispositivo.dispositivoId
-    uuid           <-> Dispositivo.uuid
     nombre         <-> Dispositivo.nombre
 
 TipoMedida:
@@ -108,15 +100,12 @@ TipoMedida:
     unidad         <-> TipoMedida.unidad
 
 MedidaVista:
-    medida_id      <-> Medida.medidaId
     dispositivo_id <-> Medida.dispositivoId
     tipo_medida_id <-> Medida.tipoMedidaId
     valor          <-> Medida.valor
-    contador       <-> Medida.contador
-    rssi           <-> Medida.rssi
     fecha_hora     <-> Medida.fechaHora
 
-Los campos uuid, dispositivo, tipo_medida y unidad de MedidaVista
+Los campos dispositivo, tipo_medida y unidad de MedidaVista
 se obtienen relacionando Medida con Dispositivo y TipoMedida.
 ```
 
@@ -133,24 +122,28 @@ el dispositivo debe existir en Dispositivo
 el tipo debe existir en TipoMedida
 ```
 
+`contador` y `rssi` se validan como datos recibidos desde Android, pero no forman parte de la persistencia simplificada de Sprint 0.
+
 ### Inserción
 
 ```text
 validarMedidaEntrada(datos)
-resolver Dispositivo por uuid
+usar uuid como Dispositivo.dispositivoId
 resolver TipoMedida por tipo_medida_id
-insertar la fila en Medida
-recuperar la fila creada
+insertar en Medida solamente dispositivo_id, tipo_medida_id y valor
+MariaDB genera fecha_hora
+recuperar la última fila insertada para ese dispositivo y tipo
 producir MedidaVista
 ```
 
 ## Aclaraciones del Diseño
 
-- Los nombres lógicos usan `snake_case`; PHP y SQL conservan los identificadores implementados en `camelCase`. La correspondencia se declara arriba de forma explícita.
-- `ConexionBD` abstrae el recurso de persistencia; el diseño no expresa handles, referencias ni objetos concretos del lenguaje.
-- Las filas leídas de la base se normalizan a `N` y `Z` antes de formar los tipos de dominio.
-- Los filtros opcionales se validan antes de usarse y las consultas variables se construyen mediante parámetros enlazados.
-- `SDBaseDatos.php` es configuración privada local y no se versiona; el repositorio solo contiene `SDBaseDatos.example.php`.
+- Los nombres lógicos usan `snake_case`; PHP y SQL conservan los identificadores implementados en `camelCase`.
+- El UUID BLE del nodo se reutiliza como `Dispositivo.dispositivoId`; no existe una segunda columna `uuid` en la base de datos.
+- `contador` y `rssi` permanecen en la recepción Android y en la entrada del backend, pero no se almacenan.
+- `MedidaVista` refleja únicamente información que puede obtenerse del esquema simplificado.
+- `ConexionBD` abstrae el recurso de persistencia.
+- `SDBaseDatos.php` es configuración privada local y no se versiona.
 
 ## Reglas Generales
 

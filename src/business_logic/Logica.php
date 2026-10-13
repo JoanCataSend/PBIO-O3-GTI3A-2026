@@ -5,9 +5,9 @@
  * Descripción: lógica de negocio del servidor PBIO. Valida entradas, accede a
  *              MariaDB y devuelve datos de dominio sin conocer HTTP ni la GUI.
  * Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
- * Fecha: 2026-10-07
+ * Fecha: 2026-10-13
  * Autor: Joan Catala Sendra
- * Aportación: implementación de la lógica de negocio independiente de transporte.
+ * Aportación: adaptación de la lógica a la persistencia simplificada de Sprint 0.
  */
 
 declare(strict_types=1);
@@ -74,7 +74,7 @@ function probarConexion(): array
 /*
  * --------------------
  * Diseño lógico: datos: MedidaEntrada --> insertarMedida() --> medida: MedidaVista
- * Descripción: valida la entrada, resuelve sus catálogos, inserta la medida y devuelve la fila creada.
+ * Descripción: valida la entrada e inserta únicamente los campos persistidos en Sprint 0.
  * --------------------
  */
 function insertarMedida(array $datos): array
@@ -83,24 +83,23 @@ function insertarMedida(array $datos): array
 
     $bd = conexionBD();
 
-    $uuid = trim((string)$datos['uuid']);
+    /*
+     * El UUID BLE se reutiliza como identificador natural del dispositivo.
+     * Contador y RSSI siguen llegando desde Android, pero no se persisten.
+     */
+    $dispositivoId = trim((string)$datos['uuid']);
     $tipoMedidaId = (int)$datos['tipoMedidaId'];
     $valor = (int)$datos['valor'];
-    $contador = (int)$datos['contador'];
-    $rssi = (int)$datos['rssi'];
 
     $stmt = $bd->prepare(
-        'SELECT dispositivoId FROM Dispositivo WHERE uuid = ?'
+        'SELECT dispositivoId FROM Dispositivo WHERE dispositivoId = ?'
     );
-    $stmt->bind_param('s', $uuid);
+    $stmt->bind_param('s', $dispositivoId);
     $stmt->execute();
-    $filaDispositivo = $stmt->get_result()->fetch_assoc();
 
-    if (!$filaDispositivo) {
-        throw new DomainException('No existe un dispositivo con ese uuid');
+    if (!$stmt->get_result()->fetch_assoc()) {
+        throw new DomainException('No existe un dispositivo con ese identificador');
     }
-
-    $dispositivoId = (int)$filaDispositivo['dispositivoId'];
 
     $stmt = $bd->prepare(
         'SELECT tipoMedidaId FROM TipoMedida WHERE tipoMedidaId = ?'
@@ -114,47 +113,21 @@ function insertarMedida(array $datos): array
 
     $stmt = $bd->prepare(
         'INSERT INTO Medida
-            (dispositivoId, tipoMedidaId, valor, contador, rssi)
-         VALUES (?, ?, ?, ?, ?)'
+            (dispositivoId, tipoMedidaId, valor)
+         VALUES (?, ?, ?)'
     );
     $stmt->bind_param(
-        'iiiii',
+        'sii',
         $dispositivoId,
         $tipoMedidaId,
-        $valor,
-        $contador,
-        $rssi
+        $valor
     );
     $stmt->execute();
 
-    return buscarMedidaConId((int)$bd->insert_id);
-}
-
-/*
- * --------------------
- * Diseño lógico: medida_id: N --> buscarMedidaConId() --> medida: MedidaVista
- * Descripción: recupera una medida por su identificador interno.
- * --------------------
- */
-function buscarMedidaConId(int $medidaId): array
-{
-    if ($medidaId <= 0) {
-        throw new InvalidArgumentException('medidaId debe ser positivo');
-    }
-
-    $bd = conexionBD();
-    $stmt = $bd->prepare(
-        consultaMedidaVista() . ' WHERE m.medidaId = ?'
+    return buscarUltimaMedida(
+        $dispositivoId,
+        $tipoMedidaId
     );
-    $stmt->bind_param('i', $medidaId);
-    $stmt->execute();
-    $fila = $stmt->get_result()->fetch_assoc();
-
-    if (!$fila) {
-        throw new DomainException('No existe esa medida');
-    }
-
-    return normalizarMedidaVista($fila);
 }
 
 /*
@@ -170,23 +143,33 @@ function listarMedidas(array $filtros = []): array
     $tipos = '';
     $valores = [];
 
-    foreach (['dispositivoId', 'tipoMedidaId'] as $campo) {
-        if (!isset($filtros[$campo]) || $filtros[$campo] === '') {
-            continue;
+    if (isset($filtros['dispositivoId']) && $filtros['dispositivoId'] !== '') {
+        $dispositivoId = trim((string)$filtros['dispositivoId']);
+
+        if (strlen($dispositivoId) !== 16) {
+            throw new InvalidArgumentException(
+                'dispositivoId debe contener exactamente 16 caracteres'
+            );
         }
 
-        if (filter_var($filtros[$campo], FILTER_VALIDATE_INT) === false
-            || (int)$filtros[$campo] <= 0) {
-            throw new InvalidArgumentException($campo . ' debe ser un entero positivo');
+        $where[] = 'm.dispositivoId = ?';
+        $tipos .= 's';
+        $valores[] = $dispositivoId;
+    }
+
+    if (isset($filtros['tipoMedidaId']) && $filtros['tipoMedidaId'] !== '') {
+        if (filter_var(
+            $filtros['tipoMedidaId'],
+            FILTER_VALIDATE_INT
+        ) === false || (int)$filtros['tipoMedidaId'] <= 0) {
+            throw new InvalidArgumentException(
+                'tipoMedidaId debe ser un entero positivo'
+            );
         }
 
-        $columna = $campo === 'dispositivoId'
-            ? 'm.dispositivoId'
-            : 'm.tipoMedidaId';
-
-        $where[] = $columna . ' = ?';
+        $where[] = 'm.tipoMedidaId = ?';
         $tipos .= 'i';
-        $valores[] = (int)$filtros[$campo];
+        $valores[] = (int)$filtros['tipoMedidaId'];
     }
 
     foreach (['desde', 'hasta'] as $campo) {
@@ -205,7 +188,10 @@ function listarMedidas(array $filtros = []): array
             );
         }
 
-        $where[] = 'm.fechaHora ' . ($campo === 'desde' ? '>=' : '<=') . ' ?';
+        $where[] = 'm.fechaHora '
+            . ($campo === 'desde' ? '>=' : '<=')
+            . ' ?';
+
         $tipos .= 's';
         $valores[] = $fecha;
     }
@@ -216,7 +202,7 @@ function listarMedidas(array $filtros = []): array
         $sql .= ' WHERE ' . implode(' AND ', $where);
     }
 
-    $sql .= ' ORDER BY m.fechaHora DESC, m.medidaId DESC LIMIT 500';
+    $sql .= ' ORDER BY m.fechaHora DESC LIMIT 500';
 
     $stmt = $bd->prepare($sql);
 
@@ -225,6 +211,7 @@ function listarMedidas(array $filtros = []): array
     }
 
     $stmt->execute();
+
     $resultado = $stmt->get_result();
     $medidas = [];
 
@@ -238,19 +225,20 @@ function listarMedidas(array $filtros = []): array
 /*
  * --------------------
  * Diseño lógico: listarDispositivos() --> dispositivos: [Dispositivo]
- * Descripción: devuelve los dispositivos conocidos con identificadores normalizados a N.
+ * Descripción: devuelve los dispositivos conocidos por su identificador textual.
  * --------------------
  */
 function listarDispositivos(): array
 {
     $bd = conexionBD();
+
     $resultado = $bd->query(
-        'SELECT dispositivoId, uuid, nombre FROM Dispositivo ORDER BY nombre'
+        'SELECT dispositivoId, nombre FROM Dispositivo ORDER BY nombre'
     );
+
     $dispositivos = [];
 
     while ($fila = $resultado->fetch_assoc()) {
-        $fila['dispositivoId'] = (int)$fila['dispositivoId'];
         $dispositivos[] = $fila;
     }
 
@@ -266,9 +254,11 @@ function listarDispositivos(): array
 function listarTiposMedida(): array
 {
     $bd = conexionBD();
+
     $resultado = $bd->query(
         'SELECT tipoMedidaId, nombre, unidad FROM TipoMedida ORDER BY tipoMedidaId'
     );
+
     $tipos = [];
 
     while ($fila = $resultado->fetch_assoc()) {
@@ -281,32 +271,49 @@ function listarTiposMedida(): array
 
 /*
  * --------------------
- * Diseño lógico: dispositivo_id: N, tipo_medida_id: N --> buscarUltimaMedida() --> medida: MedidaVista
+ * Diseño lógico:
+ * dispositivo_id: Text, tipo_medida_id: N --> buscarUltimaMedida() --> medida: MedidaVista
  * Descripción: devuelve la medida más reciente de un dispositivo y tipo concretos.
  * --------------------
  */
 function buscarUltimaMedida(
-    int $dispositivoId,
+    string $dispositivoId,
     int $tipoMedidaId
 ): array {
-    if ($dispositivoId <= 0 || $tipoMedidaId <= 0) {
+    $dispositivoId = trim($dispositivoId);
+
+    if (strlen($dispositivoId) !== 16) {
         throw new InvalidArgumentException(
-            'dispositivoId y tipoMedidaId deben ser positivos'
+            'dispositivoId debe contener exactamente 16 caracteres'
+        );
+    }
+
+    if ($tipoMedidaId <= 0) {
+        throw new InvalidArgumentException(
+            'tipoMedidaId debe ser positivo'
         );
     }
 
     $bd = conexionBD();
+
     $sql = consultaMedidaVista()
         . ' WHERE m.dispositivoId = ? AND m.tipoMedidaId = ?'
-        . ' ORDER BY m.fechaHora DESC, m.medidaId DESC LIMIT 1';
+        . ' ORDER BY m.fechaHora DESC LIMIT 1';
 
     $stmt = $bd->prepare($sql);
-    $stmt->bind_param('ii', $dispositivoId, $tipoMedidaId);
+    $stmt->bind_param(
+        'si',
+        $dispositivoId,
+        $tipoMedidaId
+    );
     $stmt->execute();
+
     $fila = $stmt->get_result()->fetch_assoc();
 
     if (!$fila) {
-        throw new DomainException('No hay medidas para esa combinación');
+        throw new DomainException(
+            'No hay medidas para esa combinación'
+        );
     }
 
     return normalizarMedidaVista($fila);
@@ -315,26 +322,45 @@ function buscarUltimaMedida(
 /*
  * --------------------
  * Diseño lógico: datos: MedidaEntrada --> validarMedidaEntrada()
- * Descripción: comprueba presencia, tipos y límites impuestos por el protocolo de 16 bits.
+ * Descripción: comprueba presencia, tipos y límites impuestos por el protocolo BLE.
  * --------------------
  */
 function validarMedidaEntrada(array $datos): void
 {
-    $campos = ['uuid', 'tipoMedidaId', 'valor', 'contador', 'rssi'];
+    $campos = [
+        'uuid',
+        'tipoMedidaId',
+        'valor',
+        'contador',
+        'rssi'
+    ];
 
     foreach ($campos as $campo) {
         if (!array_key_exists($campo, $datos)) {
-            throw new InvalidArgumentException('Falta el campo ' . $campo);
+            throw new InvalidArgumentException(
+                'Falta el campo ' . $campo
+            );
         }
     }
 
-    if (!is_string($datos['uuid']) || strlen(trim($datos['uuid'])) !== 16) {
-        throw new InvalidArgumentException('uuid debe contener exactamente 16 caracteres');
+    if (!is_string($datos['uuid'])
+        || strlen(trim($datos['uuid'])) !== 16) {
+        throw new InvalidArgumentException(
+            'uuid debe contener exactamente 16 caracteres'
+        );
     }
 
-    foreach (['tipoMedidaId', 'valor', 'contador', 'rssi'] as $campo) {
-        if (filter_var($datos[$campo], FILTER_VALIDATE_INT) === false) {
-            throw new InvalidArgumentException($campo . ' debe ser entero');
+    foreach (
+        ['tipoMedidaId', 'valor', 'contador', 'rssi']
+        as $campo
+    ) {
+        if (filter_var(
+            $datos[$campo],
+            FILTER_VALIDATE_INT
+        ) === false) {
+            throw new InvalidArgumentException(
+                $campo . ' debe ser entero'
+            );
         }
     }
 
@@ -343,17 +369,21 @@ function validarMedidaEntrada(array $datos): void
     $contador = (int)$datos['contador'];
 
     if ($tipoMedidaId < 0 || $tipoMedidaId > 255) {
-        throw new InvalidArgumentException('tipoMedidaId fuera de rango de 8 bits');
+        throw new InvalidArgumentException(
+            'tipoMedidaId fuera de rango de 8 bits'
+        );
     }
 
     if ($valor < -32768 || $valor > 65535) {
-        throw new InvalidArgumentException('valor fuera del rango transportable por Minor');
+        throw new InvalidArgumentException(
+            'valor fuera del rango transportable por Minor'
+        );
     }
 
-    // En el protocolo PBIO actual O3 usa Minor como N de 16 bits,
-    // mientras que temperatura usa Minor como Z de 16 bits.
     if ($tipoMedidaId === 14 && $valor < 0) {
-        throw new InvalidArgumentException('El valor de O3 debe estar entre 0 y 65535');
+        throw new InvalidArgumentException(
+            'El valor de O3 debe estar entre 0 y 65535'
+        );
     }
 
     if ($tipoMedidaId === 12 && $valor > 32767) {
@@ -363,7 +393,9 @@ function validarMedidaEntrada(array $datos): void
     }
 
     if ($contador < 0 || $contador > 255) {
-        throw new InvalidArgumentException('contador fuera de rango');
+        throw new InvalidArgumentException(
+            'contador fuera de rango'
+        );
     }
 }
 
@@ -377,16 +409,12 @@ function consultaMedidaVista(): string
 {
     return
         'SELECT
-            m.medidaId,
             d.dispositivoId,
-            d.uuid,
             d.nombre AS dispositivo,
             t.tipoMedidaId,
             t.nombre AS tipoMedida,
             t.unidad,
             m.valor,
-            m.contador,
-            m.rssi,
             DATE_FORMAT(m.fechaHora, "%Y-%m-%dT%H:%i:%s") AS fechaHora
          FROM Medida m
          INNER JOIN Dispositivo d
@@ -404,7 +432,7 @@ function consultaMedidaVista(): string
 function normalizarMedidaVista(array $fila): array
 {
     foreach (
-        ['medidaId', 'dispositivoId', 'tipoMedidaId', 'valor', 'contador', 'rssi']
+        ['tipoMedidaId', 'valor']
         as $campo
     ) {
         if (array_key_exists($campo, $fila)) {

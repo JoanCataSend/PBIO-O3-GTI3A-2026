@@ -2,7 +2,7 @@
  * Archivo: gui_unit_test.js
  * Descripción: pruebas unitarias de la GUI web sin navegador real ni transporte.
  * Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
- * Fecha: 2026-10-07
+ * Fecha: 2026-10-13
  * Autor: Joan Catala Sendra
  * Aportación: verifica transformaciones, resumen, errores y desacoplamiento de red.
  */
@@ -84,12 +84,11 @@ assert.strictEqual(
 );
 
 pintarResumen([
-    { tipoMedidaId: 14, valor: 321, rssi: -50 },
-    { tipoMedidaId: 12, valor: -12, rssi: -60 }
+    { tipoMedidaId: 14, valor: 321 },
+    { tipoMedidaId: 12, valor: -12 }
 ]);
 assert.strictEqual(elementos.valorO3.textContent, 321);
 assert.strictEqual(elementos.valorTemperatura.textContent, -12);
-assert.strictEqual(elementos.valorRssi.textContent, -50);
 
 mostrarError("fallo de prueba");
 assert.strictEqual(elementos.estadoConexion.textContent, "Error de comunicación");

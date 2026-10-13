@@ -4,9 +4,9 @@
  * Archivo: LogicaUnitTest.php
  * Descripción: pruebas unitarias automáticas de la lógica sin conexión a MariaDB.
  * Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
- * Fecha: 2026-10-07
+ * Fecha: 2026-10-13
  * Autor: Joan Catala Sendra
- * Aportación: criterios reproducibles de validación, normalización y consulta.
+ * Aportación: adapta las pruebas al modelo de persistencia simplificado.
  */
 
 declare(strict_types=1);
@@ -51,7 +51,10 @@ function esperarExcepcion(
     try {
         $funcion();
     } catch (Throwable $e) {
-        comprobar($e instanceof $claseEsperada, $nombre);
+        comprobar(
+            $e instanceof $claseEsperada,
+            $nombre
+        );
         return;
     }
 
@@ -67,7 +70,10 @@ $medidaValida = [
 ];
 
 validarMedidaEntrada($medidaValida);
-comprobar(true, 'Una MedidaEntrada válida supera la validación');
+comprobar(
+    true,
+    'Una MedidaEntrada válida supera la validación'
+);
 
 $sinUuid = $medidaValida;
 unset($sinUuid['uuid']);
@@ -75,14 +81,6 @@ esperarExcepcion(
     fn() => validarMedidaEntrada($sinUuid),
     InvalidArgumentException::class,
     'Se rechaza una medida sin uuid'
-);
-
-$uuidVacio = $medidaValida;
-$uuidVacio['uuid'] = '';
-esperarExcepcion(
-    fn() => validarMedidaEntrada($uuidVacio),
-    InvalidArgumentException::class,
-    'Se rechaza un uuid vacío'
 );
 
 $uuidCorto = $medidaValida;
@@ -133,26 +131,21 @@ esperarExcepcion(
     'Se rechaza valor mayor que el rango de Minor'
 );
 
-$contadorCero = $medidaValida;
-$contadorCero['contador'] = 0;
-validarMedidaEntrada($contadorCero);
-$contadorMaximo = $medidaValida;
-$contadorMaximo['contador'] = 255;
-validarMedidaEntrada($contadorMaximo);
-comprobar(true, 'Los contadores 0 y 255 son válidos');
-
 $o3Negativo = $medidaValida;
 $o3Negativo['valor'] = -1;
 esperarExcepcion(
     fn() => validarMedidaEntrada($o3Negativo),
     InvalidArgumentException::class,
-    'Se rechaza O3 negativo porque Minor se interpreta como N de 16 bits'
+    'Se rechaza O3 negativo'
 );
 
 $o3Maximo = $medidaValida;
 $o3Maximo['valor'] = 65535;
 validarMedidaEntrada($o3Maximo);
-comprobar(true, 'O3 acepta el máximo de 16 bits sin signo');
+comprobar(
+    true,
+    'O3 acepta el máximo de 16 bits sin signo'
+);
 
 $temperaturaMinima = $medidaValida;
 $temperaturaMinima['tipoMedidaId'] = 12;
@@ -163,7 +156,11 @@ $temperaturaMaxima = $medidaValida;
 $temperaturaMaxima['tipoMedidaId'] = 12;
 $temperaturaMaxima['valor'] = 32767;
 validarMedidaEntrada($temperaturaMaxima);
-comprobar(true, 'Temperatura acepta los extremos de Z de 16 bits');
+
+comprobar(
+    true,
+    'Temperatura acepta los extremos de Z de 16 bits'
+);
 
 $temperaturaFueraRango = $medidaValida;
 $temperaturaFueraRango['tipoMedidaId'] = 12;
@@ -175,41 +172,45 @@ esperarExcepcion(
 );
 
 $fila = [
-    'medidaId' => '10',
-    'dispositivoId' => '1',
-    'uuid' => 'EPSG-GTI-PROY-3A',
+    'dispositivoId' => 'EPSG-GTI-PROY-3A',
     'dispositivo' => 'GTI Joan',
     'tipoMedidaId' => '14',
     'tipoMedida' => 'O3',
     'unidad' => 'ppb',
     'valor' => '123',
-    'contador' => '16',
-    'rssi' => '-58',
-    'fechaHora' => '2026-10-07T10:00:00'
+    'fechaHora' => '2026-10-13T10:00:00'
 ];
 
 $normalizada = normalizarMedidaVista($fila);
+
 comprobar(
-    is_int($normalizada['medidaId'])
-    && is_int($normalizada['dispositivoId'])
+    is_string($normalizada['dispositivoId'])
     && is_int($normalizada['tipoMedidaId'])
-    && is_int($normalizada['valor'])
-    && is_int($normalizada['contador'])
-    && is_int($normalizada['rssi']),
-    'MedidaVista normaliza sus campos numéricos'
+    && is_int($normalizada['valor']),
+    'MedidaVista conserva dispositivoId textual y normaliza campos numéricos'
 );
 
 comprobar(
-    $normalizada['valor'] === 123 && $normalizada['rssi'] === -58,
+    $normalizada['dispositivoId'] === 'EPSG-GTI-PROY-3A'
+    && $normalizada['valor'] === 123,
     'MedidaVista conserva los valores después de normalizar'
 );
 
 $sql = consultaMedidaVista();
+
 comprobar(
     str_contains($sql, 'FROM Medida m')
     && str_contains($sql, 'INNER JOIN Dispositivo d')
     && str_contains($sql, 'INNER JOIN TipoMedida t'),
     'La vista de medida une exactamente las tres tablas del diseño'
+);
+
+comprobar(
+    !str_contains($sql, 'm.medidaId')
+    && !str_contains($sql, 'm.contador')
+    && !str_contains($sql, 'm.rssi')
+    && !str_contains($sql, 'd.uuid'),
+    'La consulta no depende de columnas eliminadas de la base simplificada'
 );
 
 echo PHP_EOL;

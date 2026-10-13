@@ -3,9 +3,9 @@
  * Descripción: controlador de la interfaz web del Sprint 0. Carga catálogos,
  *              consulta medidas y actualiza resumen, tabla y gráfica.
  * Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
- * Fecha: 2026-10-07
+ * Fecha: 2026-10-13
  * Autor: Joan Catala Sendra
- * Aportación: UX del navegador y refresco automático cada 5 segundos.
+ * Aportación: UX web adaptada a la persistencia simplificada de Sprint 0.
  */
 
 "use strict";
@@ -42,10 +42,6 @@ const ui = {
     temperatura:
         document.getElementById(
             "valorTemperatura"
-        ),
-    rssi:
-        document.getElementById(
-            "valorRssi"
         ),
     actualizado:
         document.getElementById(
@@ -232,7 +228,7 @@ function fechaSql(valor) {
 /**
  * --------------------
  * Diseño lógico: medidas: [MedidaVista] --> pintarResumen()
- * Descripción: muestra último O3, temperatura y RSSI.
+ * Descripción: muestra los últimos valores de O3 y temperatura.
  * --------------------
  */
 function pintarResumen(medidas) {
@@ -247,9 +243,6 @@ function pintarResumen(medidas) {
             m => Number(m.tipoMedidaId) === 12
         );
 
-    const ultima =
-        medidas[0];
-
     ui.o3.textContent =
         ultimaO3
             ? ultimaO3.valor
@@ -260,10 +253,6 @@ function pintarResumen(medidas) {
             ? ultimaTemperatura.valor
             : "—";
 
-    ui.rssi.textContent =
-        ultima
-            ? ultima.rssi
-            : "—";
 }
 
 /**
@@ -309,9 +298,6 @@ function pintarTabla(medidas) {
                     medida.unidad
                 )}
             </td>
-            <td>${escapar(
-                medida.rssi
-            )} dBm</td>
         `;
 
         ui.tabla.appendChild(tr);

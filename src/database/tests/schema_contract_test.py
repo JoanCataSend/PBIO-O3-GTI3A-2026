@@ -1,10 +1,10 @@
 """
 Archivo: schema_contract_test.py
-Descripción: contrato automático estático del esquema MariaDB del Sprint 0.
+Descripción: contrato automático estático del esquema MariaDB simplificado del Sprint 0.
 Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
-Fecha: 2026-10-07
+Fecha: 2026-10-13
 Autor: Joan Catala Sendra
-Aportación: verifica tablas, claves, restricciones, índices y catálogo mínimo.
+Aportación: verifica el modelo mínimo indicado por el profesor y su semilla.
 """
 
 from pathlib import Path
@@ -17,28 +17,44 @@ required_schema = [
     "CREATE TABLE IF NOT EXISTS Dispositivo",
     "CREATE TABLE IF NOT EXISTS TipoMedida",
     "CREATE TABLE IF NOT EXISTS Medida",
-    "uuid CHAR(16) NOT NULL",
+    "dispositivoId CHAR(16) NOT NULL",
+    "PRIMARY KEY (dispositivoId, fechaHora)",
     "FOREIGN KEY (dispositivoId)",
     "REFERENCES Dispositivo(dispositivoId)",
     "FOREIGN KEY (tipoMedidaId)",
     "REFERENCES TipoMedida(tipoMedidaId)",
-    "CHECK (contador BETWEEN 0 AND 255)",
     "CHECK (valor BETWEEN -32768 AND 65535)",
-    "INDEX idx_medida_dispositivo_tipo_fecha",
-    "INDEX idx_medida_tipo_fecha",
+]
+
+forbidden_medida_columns = [
+    "medidaId BIGINT",
+    "contador TINYINT",
+    "rssi SMALLINT",
 ]
 
 required_seed = [
+    "INSERT INTO Dispositivo (dispositivoId, nombre)",
     "EPSG-GTI-PROY-3A",
     "GTI Joan",
     "(12, 'Temperatura', '°C')",
     "(14, 'O3', 'ppb')",
 ]
 
-assert schema.count("CREATE TABLE IF NOT EXISTS") == 3, "El esquema debe contener exactamente tres tablas"
+assert schema.count("CREATE TABLE IF NOT EXISTS") == 3, (
+    "El esquema debe contener exactamente tres tablas"
+)
 
 for expected in required_schema:
     assert expected in schema, f"Falta en schema.sql: {expected}"
+
+assert "uuid CHAR(16)" not in schema, (
+    "Dispositivo no debe mantener una segunda columna uuid"
+)
+
+for forbidden in forbidden_medida_columns:
+    assert forbidden not in schema, (
+        f"Medida contiene un campo eliminado por la simplificación: {forbidden}"
+    )
 
 for expected in required_seed:
     assert expected in seed, f"Falta en seed.sql: {expected}"

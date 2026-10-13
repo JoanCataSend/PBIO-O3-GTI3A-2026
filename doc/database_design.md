@@ -6,7 +6,7 @@
 **Implementación:** `src/database/`  
 **Motor:** MariaDB / InnoDB.
 
-El diseño sigue literalmente el formato exigido por `Database_Design_Spec.md`: `TABLE`, `DESCRIPTION`, `COLUMNS`, `PRIMARY KEY`, `FOREIGN KEYS` y `CONSTRAINTS`.
+El diseño sigue el formato exigido por `Database_Design_Spec.md`: `TABLE`, `DESCRIPTION`, `COLUMNS`, `PRIMARY KEY`, `FOREIGN KEYS` y `CONSTRAINTS`.
 
 ```text
 ====================================================================================
@@ -16,8 +16,7 @@ DESCRIPTION: Stores each physical PBIO node known by the system.
 
 COLUMNS:
 
-+ dispositivoId | INT UNSIGNED | NOT NULL | AUTO_INCREMENT
-+ uuid | CHAR(16) | NOT NULL | NO DEFAULT
++ dispositivoId | CHAR(16) | NOT NULL | NO DEFAULT
 + nombre | VARCHAR(100) | NOT NULL | NO DEFAULT
 
 PRIMARY KEY: dispositivoId
@@ -28,8 +27,7 @@ FOREIGN KEYS:
 
 CONSTRAINTS:
 
-+ UNIQUE (uuid)
-+ CHECK (CHAR_LENGTH(uuid) = 16)
++ CHECK (CHAR_LENGTH(dispositivoId) = 16)
 ====================================================================================
 
 ====================================================================================
@@ -61,15 +59,12 @@ DESCRIPTION: Stores each measurement received from a registered device.
 
 COLUMNS:
 
-+ medidaId | BIGINT UNSIGNED | NOT NULL | AUTO_INCREMENT
-+ dispositivoId | INT UNSIGNED | NOT NULL | NO DEFAULT
++ dispositivoId | CHAR(16) | NOT NULL | NO DEFAULT
 + tipoMedidaId | TINYINT UNSIGNED | NOT NULL | NO DEFAULT
 + valor | INT | NOT NULL | NO DEFAULT
-+ contador | TINYINT UNSIGNED | NOT NULL | NO DEFAULT
-+ rssi | SMALLINT | NOT NULL | NO DEFAULT
 + fechaHora | DATETIME(3) | NOT NULL | CURRENT_TIMESTAMP(3)
 
-PRIMARY KEY: medidaId
+PRIMARY KEY: (dispositivoId, fechaHora)
 
 FOREIGN KEYS:
 
@@ -78,11 +73,8 @@ FOREIGN KEYS:
 
 CONSTRAINTS:
 
-+ CHECK (contador BETWEEN 0 AND 255)
 + CHECK (valor BETWEEN -32768 AND 65535)
 + ON UPDATE CASCADE / ON DELETE RESTRICT for both foreign keys
-+ INDEX (dispositivoId, tipoMedidaId, fechaHora, medidaId)
-+ INDEX (tipoMedidaId, fechaHora, medidaId)
 ====================================================================================
 ```
 
@@ -97,7 +89,7 @@ TipoMedida  1 ---- N Medida
 
 ```text
 Dispositivo:
-    uuid = "EPSG-GTI-PROY-3A"
+    dispositivoId = "EPSG-GTI-PROY-3A"
     nombre = "GTI Joan"
 
 TipoMedida:
@@ -107,15 +99,16 @@ TipoMedida:
 
 ## Aclaraciones del Diseño
 
-- El esquema SQL conserva `camelCase` porque esos son los identificadores físicos de las columnas implementadas; la lógica abstracta usa nombres de variable en minúsculas con guion bajo.
-- `Dispositivo`, `TipoMedida` y `Medida` son las únicas tablas necesarias para el Sprint 0; separar unidades en una cuarta tabla no aporta información adicional.
-- `rssi` se guarda como metadato de recepción de cada medida.
+- La persistencia se ha simplificado específicamente para Sprint 0 siguiendo la revisión docente.
+- `dispositivoId` reutiliza directamente el identificador textual de 16 caracteres del nodo; por eso no existe una segunda columna `uuid`.
+- `Medida` conserva únicamente los datos necesarios para persistir una observación: dispositivo, tipo, valor y fecha/hora.
+- `contador` y `rssi` siguen siendo útiles en BLE/Android, pero no se persisten porque no son necesarios para el objetivo del Sprint 0.
+- `medidaId` se elimina: una fila queda identificada por la clave compuesta `(dispositivoId, fechaHora)`.
 - `fechaHora` la genera MariaDB, evitando depender del reloj del teléfono.
-- El contador no es único: usa 8 bits y puede repetirse después de desbordar.
 
 ## Reglas Generales
 
 - **Lenguaje de Programación:** SQL compatible con MariaDB/InnoDB.
 - **Encabezados de Funciones/Métodos:** este componente no contiene funciones de aplicación; cada script SQL debe mantener cabecera de archivo con nombre, descripción, copyright, fecha, autor y aportación.
-- **Legibilidad del Código:** tablas, claves, `CHECK`, claves foráneas e índices deben corresponder exactamente con este diseño.
-- **Pruebas Automatizadas:** `src/database/tests/schema_contract_test.py` verifica tablas, columnas, restricciones, índices y semilla mínima.
+- **Legibilidad del Código:** tablas, claves y restricciones deben corresponder exactamente con este diseño simplificado.
+- **Pruebas Automatizadas:** `src/database/tests/schema_contract_test.py` verifica tablas, columnas, claves y semilla mínima.

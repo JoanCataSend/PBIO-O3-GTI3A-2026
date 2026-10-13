@@ -12,7 +12,10 @@ datos: MedidaEntrada --> insertarMedida() --> medida: MedidaVista
 TIPOS
 MedidaEntrada=(uuid: Text,tipo_medida_id: N,valor: Z,contador: N,rssi: Z)
 EstadoBD=(ok: B,database: Text)
-MedidaVista=(medida_id: N,dispositivo_id: N,uuid: Text,dispositivo: Text,tipo_medida_id: N,tipo_medida: Text,unidad: Text,valor: Z,contador: N,rssi: Z,fecha_hora: Text)
+MedidaVista=(dispositivo_id: Text,dispositivo: Text,tipo_medida_id: N,tipo_medida: Text,unidad: Text,valor: Z,fecha_hora: Text)
+
+ACLARACIÓN
+`contador` y `rssi` siguen formando parte de la medida recibida por Android y de MedidaEntrada, pero el backend no los devuelve en MedidaVista porque ya no se persisten en Sprint 0.
 
 IMPLEMENTACIÓN
 - `LogicaFake` expone solo operaciones de dominio y adapta los resultados a `EstadoBD`/`MedidaVista`.
@@ -31,5 +34,5 @@ ARCHIVOS DE DOMINIO/PROXY
 - PeticionarioREST.java
 - tests Java del proxy
 
-Cada método propio debe tener bloque `--------------------`, firma lógica y descripción. No cambies UUID, IDs ni package `es.upv.jcatsen.pbio`.
+Cada método propio debe tener bloque `--------------------`, firma lógica y descripción. No cambies UUID, IDs BLE ni package `es.upv.jcatsen.pbio`.
 ```

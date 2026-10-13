@@ -1,12 +1,12 @@
-﻿# gui_design.md
+# gui_design.md
 
-## DiseÃ±o del Componente
+## Diseño del Componente
 
 **Componente:** `gui`
-**ImplementaciÃ³n:** `src/gui/`
+**Implementación:** `src/gui/`
 **Lenguajes:** HTML5, CSS3 y JavaScript.
 
-Este componente implementa exclusivamente la interfaz grÃ¡fica web. No realiza comunicaciÃ³n remota directamente: todas las operaciones de dominio se solicitan a `frontend_business_logic` mediante `LogicaFake`.
+Este componente implementa exclusivamente la interfaz gráfica web. No realiza comunicación remota directamente: todas las operaciones de dominio se solicitan a `frontend_business_logic` mediante `LogicaFake`.
 
 ### Dependencia permitida
 
@@ -17,7 +17,7 @@ gui
 frontend_business_logic
 ```
 
-No existe `fetch`, URL del servidor ni cÃ³digo de protocolo dentro de `src/gui/js/app.js`.
+No existe `fetch`, URL del servidor ni código de protocolo dentro de `src/gui/js/app.js`.
 
 ### Operaciones de la GUI
 
@@ -66,35 +66,36 @@ actualizar()
 programar actualizar() cada 5 s
 ```
 
-### DescripciÃ³n textual de la GUI
+### Descripción textual de la GUI
 
-- Cabecera con nombre del monitor y estado de conexiÃ³n.
+- Cabecera con nombre del monitor y estado de conexión.
 - Panel de filtros por dispositivo, tipo y rango temporal.
-- Tarjetas de Ãºltima medida de O3, temperatura y RSSI.
-- GrÃ¡fica temporal del tipo seleccionado.
-- Tabla histÃ³rica con fecha, dispositivo, tipo, valor/unidad y RSSI.
-- BotÃ³n de actualizaciÃ³n manual y refresco automÃ¡tico cada 5 segundos.
+- Tarjetas de última medida de O3 y temperatura.
+- Gráfica temporal del tipo seleccionado.
+- Tabla histórica con fecha, dispositivo, tipo y valor/unidad.
+- Botón de actualización manual y refresco automático cada 5 segundos.
 
 ### UX, accesibilidad y seguridad
 
-- DiseÃ±o responsive para mÃ³vil y escritorio.
-- Controles tÃ¡ctiles de al menos 44 px e inputs de 16 px en mÃ³vil.
+- Diseño responsive para móvil y escritorio.
+- Controles táctiles de al menos 44 px e inputs de 16 px en móvil.
 - Compatibilidad con `safe-area`.
-- Estado de conexiÃ³n con `role="status"` y `aria-live`.
+- Estado de conexión con `role="status"` y `aria-live`.
 - Tabla desplazable horizontalmente en pantallas estrechas.
 - Valores escapados antes de insertarlos mediante `innerHTML`.
 - Sin frameworks ni dependencias externas.
 
-## Aclaraciones del DiseÃ±o
+## Aclaraciones del Diseño
 
 - `app.js` no contiene `fetch` ni construye rutas de red.
 - `LogicaFake` pertenece a `frontend_business_logic`, no al componente GUI.
-- Si no se selecciona un tipo, la grÃ¡fica prioriza O3; las tarjetas muestran el valor mÃ¡s reciente de cada tipo dentro del conjunto recibido.
-- La comprobaciÃ³n visual presencial complementa, pero no sustituye, las pruebas automatizadas.
+- Si no se selecciona un tipo, la gráfica prioriza O3; las tarjetas muestran el valor más reciente de cada tipo dentro del conjunto recibido.
+- RSSI sigue visible en Android como dato de recepción BLE, pero deja de aparecer en la web porque ya no se persiste.
+- La comprobación visual presencial complementa, pero no sustituye, las pruebas automatizadas.
 
 ## Reglas Generales
 
-- **Lenguaje de ProgramaciÃ³n:** JavaScript sin frameworks, HTML5 y CSS3.
-- **Encabezados de Funciones/MÃ©todos:** cada funciÃ³n JavaScript propia debe incluir diseÃ±o lÃ³gico entre `--------------------` y breve descripciÃ³n.
-- **Legibilidad del CÃ³digo:** separar manipulaciÃ³n del DOM, presentaciÃ³n y llamadas a la interfaz de `frontend_business_logic`.
-- **Pruebas Automatizadas:** `src/gui/tests/gui_unit_test.js` verifica transformaciones puras, escape, resumen y ausencia de comunicaciÃ³n directa.
+- **Lenguaje de Programación:** JavaScript sin frameworks, HTML5 y CSS3.
+- **Encabezados de Funciones/Métodos:** cada función JavaScript propia debe incluir diseño lógico entre `--------------------` y breve descripción.
+- **Legibilidad del Código:** separar manipulación del DOM, presentación y llamadas a la interfaz de `frontend_business_logic`.
+- **Pruebas Automatizadas:** `src/gui/tests/gui_unit_test.js` verifica transformaciones puras, escape, resumen y ausencia de comunicación directa.

@@ -1,9 +1,9 @@
 # Archivo: build-plesk-package.ps1
 # Descripción: genera un paquete de despliegue Plesk sin duplicar código versionado.
 # Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
-# Fecha: 2026-10-07
+# Fecha: 2026-10-13
 # Autor: Joan Catala Sendra
-# Aportación: empaquetado reproducible de GUI, proxy web, comunicación y lógica.
+# Aportación: empaquetado reproducible de GUI, proxy web, comunicación y lógica, preservando UTF-8.
 
 $ErrorActionPreference = "Stop"
 $Repo = Split-Path -Parent $PSScriptRoot
@@ -25,7 +25,9 @@ Copy-Item (Join-Path $Repo "src\communication\api.php") (Join-Path $Destino "api
 Copy-Item (Join-Path $Repo "src\business_logic\Logica.php") (Join-Path $Destino "server\Logica.php")
 Copy-Item (Join-Path $Repo "src\business_logic\SDBaseDatos.example.php") (Join-Path $Destino "server\SDBaseDatos.example.php")
 
-$Index = Get-Content (Join-Path $Repo "src\gui\index.html") -Raw
+# IMPORTANTE: en Windows PowerShell 5.1 Get-Content sin -Encoding puede interpretar
+# un fichero UTF-8 como ANSI y producir texto tipo "GrÃ¡fica". Se fuerza UTF-8.
+$Index = Get-Content (Join-Path $Repo "src\gui\index.html") -Raw -Encoding UTF8
 $Index = $Index.Replace(
     "../frontend_business_logic/web/LogicaFake.js",
     "js/LogicaFake.js"

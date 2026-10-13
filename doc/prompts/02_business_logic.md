@@ -9,18 +9,21 @@ La lógica de negocio debe depender solo de tipos de dominio y de persistencia. 
 INTERFAZ LÓGICA
 probarConexion() --> estado: EstadoBD
 datos: MedidaEntrada --> insertarMedida() --> medida: MedidaVista
-medida_id: N --> buscarMedidaConId() --> medida: MedidaVista
 filtros: FiltrosMedida --> listarMedidas() --> medidas: [MedidaVista]
 listarDispositivos() --> dispositivos: [Dispositivo]
 listarTiposMedida() --> tipos: [TipoMedida]
-dispositivo_id: N, tipo_medida_id: N --> buscarUltimaMedida() --> medida: MedidaVista
+dispositivo_id: Text, tipo_medida_id: N --> buscarUltimaMedida() --> medida: MedidaVista
 datos: MedidaEntrada --> validarMedidaEntrada()
 conexionBD() --> conexion: ConexionBD
 consultaMedidaVista() --> consulta: Text
 fila: MedidaVista --> normalizarMedidaVista() --> medida: MedidaVista
 
 ALINEACIÓN CON BBDD
-Las consultas deben usar exactamente Dispositivo, TipoMedida y Medida con las columnas descritas en `database_design.md`. Usa sentencias preparadas para valores variables.
+Las consultas deben usar exactamente Dispositivo, TipoMedida y Medida con las columnas descritas en `database_design.md`.
+`uuid` recibido desde Android se reutiliza como `Dispositivo.dispositivoId`.
+`contador` y `rssi` pueden validarse como parte de la entrada recibida, pero NO se almacenan.
+No existe `medidaId` ni una operación buscarMedidaConId().
+Usa sentencias preparadas para valores variables.
 
 VALIDACIÓN
 - uuid exactamente 16 caracteres.
@@ -38,7 +41,7 @@ COMENTARIOS
 Cada función debe tener un bloque `--------------------` con diseño lógico usando solo N, Z, R, B, Text, agregaciones y colecciones, más una breve descripción.
 
 TESTS
-Genera `src/business_logic/tests/LogicaUnitTest.php` sin necesitar una BBDD real para las comprobaciones de validación y contrato estático. Cubre límites, normalización y que la consulta de vista relacione las tres tablas.
+Genera `src/business_logic/tests/LogicaUnitTest.php` sin necesitar una BBDD real para las comprobaciones de validación y contrato estático. Cubre límites, normalización y que la consulta no dependa de las columnas eliminadas.
 
 No rediseñes la capa.
 ```

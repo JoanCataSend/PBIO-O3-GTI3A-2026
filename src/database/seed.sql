@@ -1,11 +1,11 @@
 -- Archivo: seed.sql
 -- Descripción: datos de catálogo estrictamente necesarios para el Sprint 0.
 -- Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
--- Fecha: 2026-10-07
+-- Fecha: 2026-10-13
 -- Autor: Joan Catala Sendra
--- Aportación: dispositivo del proyecto y los dos tipos realmente publicados.
+-- Aportación: adapta la semilla al identificador natural simplificado del dispositivo.
 
-INSERT INTO Dispositivo (uuid, nombre)
+INSERT INTO Dispositivo (dispositivoId, nombre)
 VALUES ('EPSG-GTI-PROY-3A', 'GTI Joan')
 ON DUPLICATE KEY UPDATE
     nombre = VALUES(nombre);

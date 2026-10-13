@@ -4,9 +4,9 @@
  * Archivo: api.php
  * Descripción: adaptador HTTP/JSON entre clientes y la lógica de negocio PBIO.
  * Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
- * Fecha: 2026-10-07
+ * Fecha: 2026-10-13
  * Autor: Joan Catala Sendra
- * Aportación: traducción REST sin mezclar reglas HTTP con la lógica de negocio.
+ * Aportación: adapta los filtros al identificador textual simplificado del dispositivo.
  */
 
 declare(strict_types=1);
@@ -33,7 +33,9 @@ foreach ($rutasLogica as $candidata) {
 
 if ($rutaLogica === null) {
     http_response_code(500);
-    echo json_encode(['error' => 'Lógica de negocio no disponible']);
+    echo json_encode([
+        'error' => 'Lógica de negocio no disponible'
+    ]);
     exit;
 }
 
@@ -45,66 +47,105 @@ require_once $rutaLogica;
  * Descripción: establece el estado HTTP, serializa JSON y finaliza la respuesta.
  * --------------------
  */
-function responder(int $codigo, mixed $datos): void
-{
+function responder(
+    int $codigo,
+    mixed $datos
+): void {
     http_response_code($codigo);
 
     echo json_encode(
         $datos,
-        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        JSON_UNESCAPED_UNICODE
+        | JSON_UNESCAPED_SLASHES
     );
 
     exit;
 }
 
 try {
-    $metodo = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    $metodo =
+        $_SERVER['REQUEST_METHOD']
+        ?? 'GET';
 
     if ($metodo === 'POST') {
-        $texto = file_get_contents('php://input');
-        $datos = json_decode($texto ?: '', true);
+        $texto =
+            file_get_contents(
+                'php://input'
+            );
+
+        $datos =
+            json_decode(
+                $texto ?: '',
+                true
+            );
 
         if (!is_array($datos)) {
-            throw new InvalidArgumentException('El cuerpo debe ser un objeto JSON');
+            throw new InvalidArgumentException(
+                'El cuerpo debe ser un objeto JSON'
+            );
         }
 
-        responder(201, insertarMedida($datos));
+        responder(
+            201,
+            insertarMedida($datos)
+        );
     }
 
     if ($metodo !== 'GET') {
-        responder(405, ['error' => 'Método no permitido']);
+        responder(
+            405,
+            ['error' => 'Método no permitido']
+        );
     }
 
-    $accion = (string)($_GET['accion'] ?? 'medidas');
+    $accion =
+        (string)(
+            $_GET['accion']
+            ?? 'medidas'
+        );
 
     switch ($accion) {
         case 'health':
-            responder(200, probarConexion());
+            responder(
+                200,
+                probarConexion()
+            );
 
         case 'dispositivos':
-            responder(200, listarDispositivos());
+            responder(
+                200,
+                listarDispositivos()
+            );
 
         case 'tipos':
-            responder(200, listarTiposMedida());
+            responder(
+                200,
+                listarTiposMedida()
+            );
 
         case 'ultima':
-            if (!isset($_GET['dispositivoId'], $_GET['tipoMedidaId'])) {
+            if (!isset(
+                $_GET['dispositivoId'],
+                $_GET['tipoMedidaId']
+            )) {
                 throw new InvalidArgumentException(
                     'Faltan dispositivoId y tipoMedidaId'
                 );
             }
 
-            if (filter_var($_GET['dispositivoId'], FILTER_VALIDATE_INT) === false
-                || filter_var($_GET['tipoMedidaId'], FILTER_VALIDATE_INT) === false) {
+            if (filter_var(
+                $_GET['tipoMedidaId'],
+                FILTER_VALIDATE_INT
+            ) === false) {
                 throw new InvalidArgumentException(
-                    'dispositivoId y tipoMedidaId deben ser enteros'
+                    'tipoMedidaId debe ser entero'
                 );
             }
 
             responder(
                 200,
                 buscarUltimaMedida(
-                    (int)$_GET['dispositivoId'],
+                    (string)$_GET['dispositivoId'],
                     (int)$_GET['tipoMedidaId']
                 )
             );
@@ -113,23 +154,42 @@ try {
             responder(
                 200,
                 listarMedidas([
-                    'dispositivoId' => $_GET['dispositivoId'] ?? '',
-                    'tipoMedidaId' => $_GET['tipoMedidaId'] ?? '',
-                    'desde' => $_GET['desde'] ?? '',
-                    'hasta' => $_GET['hasta'] ?? ''
+                    'dispositivoId' =>
+                        $_GET['dispositivoId']
+                        ?? '',
+                    'tipoMedidaId' =>
+                        $_GET['tipoMedidaId']
+                        ?? '',
+                    'desde' =>
+                        $_GET['desde']
+                        ?? '',
+                    'hasta' =>
+                        $_GET['hasta']
+                        ?? ''
                 ])
             );
 
         default:
-            throw new InvalidArgumentException('Acción REST no soportada');
+            throw new InvalidArgumentException(
+                'Acción REST no soportada'
+            );
     }
 
 } catch (InvalidArgumentException $e) {
-    responder(400, ['error' => $e->getMessage()]);
+    responder(
+        400,
+        ['error' => $e->getMessage()]
+    );
 
 } catch (DomainException $e) {
-    responder(404, ['error' => $e->getMessage()]);
+    responder(
+        404,
+        ['error' => $e->getMessage()]
+    );
 
 } catch (Throwable $e) {
-    responder(500, ['error' => 'Error interno del servidor']);
+    responder(
+        500,
+        ['error' => 'Error interno del servidor']
+    );
 }

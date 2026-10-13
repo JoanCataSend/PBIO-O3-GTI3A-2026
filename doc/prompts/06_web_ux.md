@@ -26,10 +26,13 @@ mensaje: Text --> mostrarError()
 PANTALLA
 - estado de conexión accesible
 - filtros de dispositivo/tipo/fecha
-- tarjetas de O3, temperatura y RSSI
+- tarjetas de O3 y temperatura
 - gráfica Canvas
-- tabla histórica
+- tabla histórica sin RSSI
 - botón y refresco cada 5 s
+
+ACLARACIÓN
+RSSI sigue mostrándose en Android como información de recepción BLE, pero no aparece en la web porque ya no se almacena en la base de datos simplificada.
 
 SEGURIDAD/UX
 Escapar datos antes de innerHTML, responsive, controles táctiles >=44 px, inputs 16 px, safe-area y tabla desplazable.

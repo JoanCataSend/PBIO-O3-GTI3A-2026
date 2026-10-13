@@ -13,10 +13,13 @@ RESPONSABILIDAD
 RUTAS
 POST api.php -> insertarMedida(cuerpo) -> 201 MedidaVista
 GET api.php?accion=medidas -> listarMedidas(filtros) -> 200 [MedidaVista]
-GET api.php?accion=ultima&dispositivoId=<N>&tipoMedidaId=<N> -> 200 MedidaVista
+GET api.php?accion=ultima&dispositivoId=<Text>&tipoMedidaId=<N> -> 200 MedidaVista
 GET api.php?accion=dispositivos -> 200 [Dispositivo]
 GET api.php?accion=tipos -> 200 [TipoMedida]
 GET api.php?accion=health -> probarConexion() -> 200 EstadoBD
+
+IMPORTANTE
+`dispositivoId` ya no es un entero autoincremental: es el identificador textual de 16 caracteres del nodo.
 
 FUNCIÓN PROPIA
 codigo: N, datos: Text --> responder()
@@ -31,7 +34,7 @@ DESPLIEGUE
 En el repositorio la lógica está en `../business_logic/Logica.php`. El mismo `api.php` puede aceptar una copia de despliegue en `./server/Logica.php`, pero esa copia no debe existir versionada en `src/communication/`.
 
 TEST
-`ApiIntegracionTest.php` debe ejecutar por defecto un contrato offline reproducible. Si se define `PBIO_API_URL`, añade pruebas HTTP contra el despliegue real; el POST válido es opt-in mediante `PBIO_API_WRITE_TEST=1` para no contaminar la base de datos.
+`ApiIntegracionTest.php` acepta `PBIO_API_URL`; el POST válido es opt-in mediante `PBIO_API_WRITE_TEST=1` para no contaminar la base de datos.
 
 Cada función propia debe tener bloque `--------------------`, diseño lógico y descripción. Mantén compatibilidad con PHP 8.0+ y no incluyas credenciales.
 ```

@@ -196,7 +196,7 @@ if bl_design.is_file():
           "business_logic_design: contiene conceptos de comunicación/transporte")
     for entity in ("Dispositivo", "TipoMedida", "Medida"):
         check(entity in bl_text, f"business_logic_design: referencia entidad BD {entity}", f"business_logic_design: no referencia {entity}")
-    for column in ("dispositivoId", "uuid", "nombre", "tipoMedidaId", "medidaId", "valor", "contador", "rssi", "fechaHora"):
+    for column in ("dispositivoId", "nombre", "tipoMedidaId", "valor", "fechaHora"):
         check(column in bl_text, f"business_logic_design: alinea columna {column}", f"business_logic_design: no alinea columna {column}")
 
 bl_source_files = list((ROOT / "src/business_logic").rglob("*")) if (ROOT / "src/business_logic").is_dir() else []
