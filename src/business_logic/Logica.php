@@ -3,7 +3,7 @@
 /*
  * Archivo: Logica.php
  * Descripción: lógica de negocio del servidor PBIO. Valida entradas, accede a
- *              MariaDB y devuelve datos de dominio sin conocer HTTP ni la GUI.
+ *              MariaDB y devuelve datos de dominio sin depender de ninguna capa de transporte ni de la GUI.
  * Copyright: 2026 Joan Catala Sendra (uso académico PBIO - UPV)
  * Fecha: 2026-10-13
  * Autor: Joan Catala Sendra

@@ -77,17 +77,24 @@ valida: B
                     |
                     | analizar() -->
                     |
+                    |
 bytes: [N]      --> TramaIBeacon() -->
+                    |
                     |
         valida: B <-- esValida() <--
                     |
+                    |
    uuid: [N]_16 <-- getUUID() <--
+                    |
                     |
     major: [N]_2 <-- getMajor() <--
                     |
+                    |
     minor: [N]_2 <-- getMinor() <--
                     |
+                    |
       tx_power: Z <-- getTxPower() <--
+                    |
                     |
       bytes: [N] <-- getLosBytes() <--
                     |
@@ -112,38 +119,79 @@ si existe y hay 25 bytes desde el prefijo:
 ### Clase estática `Utilidades`
 
 ```text
-bytes: [N]   --> bytesToString() --> texto: Text      --x
-bytes: [N]   --> bytesToHexString() --> hexadecimal: Text --x
-bytes: [N]   --> bytesToUnsignedInt() --> valor: N    --x
-bytes: [N]_2 --> bytesToSignedInt16() --> valor: Z    --x
+                         -------- Utilidades --------
+                         |
+                         |
+bytes: [N]            --> bytesToString() --x
+texto: Text           <--
+                         |
+                         |
+bytes: [N]            --> bytesToHexString() --x
+hexadecimal: Text     <--
+                         |
+                         |
+bytes: [N]            --> bytesToUnsignedInt() --x
+valor: N              <--
+                         |
+                         |
+bytes: [N]_2          --> bytesToSignedInt16() --x
+valor: Z              <--
+                         |
+                         ----------------------------
 ```
 
-### `MainActivity`
-
-Estado relevante:
+### Clase `MainActivity`
 
 ```text
-ultimo_contador_o3_enviado: Z
-ultimo_contador_temperatura_enviado: Z
-```
-
-Operaciones principales:
-
-```text
-onCreate()
-comprobarServidor()
-tengoPermisosBLE() --> concedidos: B
-pedirPermisosSiHacenFalta()
-comprobarBluetooth()
-botonBuscarNuestroDispositivoBTLEPulsado()
-botonDetenerBusquedaDispositivosBTLEPulsado()
-iniciarBusqueda()
-detenerBusqueda()
-resultado: ResultadoBLE --> procesarResultado()
-uuid: Text, id_medida: N, valor: Z, contador: N, rssi: Z --> enviarMedidaSiEsNueva()
-resultado: ResultadoPermisos --> onRequestPermissionsResult()
-onResume()
-onDestroy()
+                              -------- MainActivity --------
+                              | ultimo_contador_o3_enviado: Z
+                              | ultimo_contador_temperatura_enviado: Z
+                              |
+                              |
+                              onCreate() -->
+                              |
+                              |
+                              comprobarServidor() -->
+                              |
+                              |
+concedidos: B             <-- tengoPermisosBLE() <--
+                              |
+                              |
+                              pedirPermisosSiHacenFalta() -->
+                              |
+                              |
+                              comprobarBluetooth() <--
+                              |
+                              |
+                              botonBuscarNuestroDispositivoBTLEPulsado() -->
+                              |
+                              |
+                              botonDetenerBusquedaDispositivosBTLEPulsado() -->
+                              |
+                              |
+                              iniciarBusqueda() -->
+                              |
+                              |
+                              detenerBusqueda() -->
+                              |
+                              |
+resultado: ResultadoBLE   --> procesarResultado() -->
+                              |
+                              |
+uuid: Text, id_medida: N,     |
+valor: Z, contador: N,        |
+rssi: Z                   --> enviarMedidaSiEsNueva() -->
+                              |
+                              |
+resultado: ResultadoPermisos --> onRequestPermissionsResult() -->
+                              |
+                              |
+                              onResume() -->
+                              |
+                              |
+                              onDestroy() -->
+                              |
+                              ------------------------------
 ```
 
 Algoritmo lógico de `procesarResultado()`:
